@@ -56,8 +56,9 @@
   .pan.locked{cursor:default}
   .pan.locked:hover{transform:none}
 
-  .bag{display:flex;gap:8px;padding:10px 12px;background:var(--paper-2);border-top:2px solid var(--rule);flex-wrap:wrap}
-  .slot{width:58px;height:58px;border:2px dashed var(--rule);border-radius:10px;background:#fff;
+  .bag{display:flex;gap:10px;align-items:center;padding:9px 12px;background:var(--paper-2);border-top:2px solid var(--rule);flex-wrap:wrap}
+  #bag{display:flex;flex-wrap:wrap;gap:8px}
+  .slot{width:54px;height:54px;border:2px dashed var(--rule);border-radius:10px;background:#fff;
         display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:var(--rule);
         overflow:hidden;line-height:0}
   .slot img{width:100%;height:100%;object-fit:cover;display:block}
@@ -276,9 +277,29 @@ const AMBIENCE={
 function setAmbience(name){
   const c=ac(); if(!c) return;
   if(AMB.cur===name) return;
-  AMB.cur=name; stopAmb(1.0);
+  const first = !AMB.nodes.length && !forestSrc;
+  AMB.cur=name;
+  if(first){ applyAmbience(name); return; }      /* rien à couper : on démarre tout de suite */
+  stopAmb(1.0);
   setTimeout(function(){ if(AMB.cur===name) applyAmbience(name); }, 1100);
 }
+
+/* Les navigateurs bloquent tout son avant une interaction. On saisit donc
+   le tout premier geste de la page, quel qu'il soit, pour lancer l'ambiance. */
+let primed=false;
+function primeAudio(){
+  if(primed) return;
+  const c=ac(); if(!c) return;
+  const go=function(){
+    if(primed) return; primed=true;
+    document.removeEventListener('pointerdown',primeAudio);
+    document.removeEventListener('keydown',primeAudio);
+    const cur=AMB.cur||'forest'; AMB.cur=null; setAmbience(cur);
+  };
+  if(c.state==='running') go(); else c.resume().then(go).catch(function(){});
+}
+document.addEventListener('pointerdown',primeAudio);
+document.addEventListener('keydown',primeAudio);
 function applyAmbience(name){
   const c=ac(); if(!c) return;
   const cfg=AMBIENCE[name]; if(!cfg) return;
