@@ -404,7 +404,22 @@ function bobo(text,cls){ return '<div class="talk"><div class="who"><img src="'+
 function other(name,text,cls){ return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble '+cls+'"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">'+name+'</b>'+text+'</div></div>'; }
 function you(text){ return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble you"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">You</b>'+text+'</div></div>'; }
 
-function restart(){ found=[]; reqIdx=0; chaseOrder=[]; chaseSaid=0; climbed=false; traded=false; attempts={}; sfx('start'); intro(); }
+function restart(){ found=[]; reqIdx=0; chaseOrder=[]; chaseSaid=0; climbed=false; traded=false; attempts={}; title(); }
+
+/* ---------------- écran de titre ---------------- */
+function title(){
+  setAct(1); $('bagbox').style.display='none';
+  $('scene').innerHTML='<img class="bg" src="'+A.clearing+'" alt="The clearing">';
+  $('panel').innerHTML=
+    '<p class="eyebrow">Bobo\u2019s Map &middot; Chapter Two</p>'+
+    '<h3 style="font-size:34px;margin-bottom:16px">The Clearing</h3>'+
+    '<div class="bubble" style="border-color:var(--sage)">A piece of Bobo\u2019s map is lost '+
+    'in the forest. He needs your sharp eyes, your polite words &mdash; and your big voice.</div>'+
+    '<div class="actions" style="margin-top:6px">'+
+      '<button class="btn wide yes" id="begin">Open the chapter</button></div>';
+  $('begin').onclick=function(){ primeAudio(); sfx('start'); setTimeout(intro,700); };
+  help('Turn the two sliders below to set the sound, then open the chapter.');
+}
 
 /* ---------------- ACT 0 : intro ---------------- */
 function intro(){
@@ -415,7 +430,7 @@ function intro(){
     '<div class="actions"><button class="btn wide yes" id="go">Let\u2019s look!</button></div>';
   $('go').onclick=function(){ sfx('step'); search(); };
   help('Read with Bobo, then start looking.');
-  setTimeout(()=>sfx('bobo'),200);
+  setTimeout(function(){ sfx('bobo'); },200);
 }
 
 /* ---------------- ACT 1 : search ---------------- */
