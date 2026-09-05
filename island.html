@@ -17,7 +17,7 @@
   html,body{margin:0;padding:0}
   body{background:var(--paper);color:var(--ink);font-family:var(--body);
        font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:32px}
-  .wrap{max-width:1480px;margin:0 auto;padding:0 22px}
+  .wrap{max-width:1480px;margin:0 auto;padding:0 22px 0 70px}
 
   header{display:flex;align-items:center;justify-content:space-between;gap:18px;
          flex-wrap:wrap;padding:18px 0 10px;border-bottom:2px solid var(--ink)}
@@ -168,9 +168,23 @@
     .sentence,.bubble{font-size:19px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  .home{position:fixed;left:14px;top:14px;z-index:60;width:44px;height:44px;border-radius:50%;
+        border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);
+        display:flex;align-items:center;justify-content:center;text-decoration:none;
+        box-shadow:0 2px 5px rgba(58,54,50,.22);transition:transform .12s ease}
+  .home:hover{transform:scale(1.08);background:#fff}
+  .home svg{width:22px;height:22px;display:block}
+  @media (max-width:760px){ .home{width:38px;height:38px;left:9px;top:9px} .home svg{width:19px;height:19px} }
 </style>
 </head>
 <body>
+<a class="home" href="index.html" title="Back to the games" aria-label="Back to the games">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11.2 12 3.5l9 7.7"/><path d="M5.4 9.6V20h13.2V9.6"/><path d="M9.8 20v-5.6h4.4V20"/>
+  </svg></a>
+
 <div class="wrap">
   <header>
     <h1>Bobo Island</h1>
