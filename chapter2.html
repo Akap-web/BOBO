@@ -367,7 +367,7 @@ const SFX={
 function sfx(k){ if(soundOn&&SFX[k]) try{SFX[k]();}catch(e){} }
 
 /* ---------------- voix ---------------- */
-let voiceOn=true, VOICES=[], VMAP={}, VCLIP=null;
+let voiceOn=true, VOICES=[], VMAP={}, VCLIP=null, hasVoices=false;
 const VFILES={"here we are the clearing look up there in the tall pine the magpie has got my map piece": "v001", "i can t fly hmm let s look around first maybe there are useful things here": "v002", "look carefully when you see something tell me where it is then your teacher clicks it": "v003", "yes": "v004", "six things a key a lantern a bottle a rope a coin and a feather some of them will be useful": "v005", "now to the bridge": "v006", "oh no a stone guardian he is blocking the bridge": "v007", "let me try": "v008", "he doesn t answer can you say it better": "v009", "ok ok how do i say it": "v010", "he moved his hand come on over the bridge": "v011", "the guardian said follow the path of the magpie but which way did it go these pictures are all mixed up": "v012", "tap them in the right order first then next finally": "v013", "so the nest is at the top of the tall pine let s go": "v014", "now tell me the story picture": "v015", "the tall pine the nest is right at the top i need to climb but how": "v016", "look in my bag what can help me climb": "v017", "try again what helps you climb": "v018", "the rope up we go here is the nest and here is the magpie": "v019", "let s ask nicely help me say it": "v020", "she won t give it maybe we can trade what can we give her look in my bag": "v021", "she wants something shiny": "v022", "good idea let s make a deal i start if i give you": "v023", "my map piece thank you look the piece shows part of the island where will the next one be": "v024", "see you at the next place": "v025", "mine shiny mine": "v026", "no it s shiny i love shiny things": "v027", "shiny for shiny deal": "v028", "if i give you": "v029", "a key there is no door in a tree": "v030", "a lantern it s daytime": "v031", "a bottle i m not thirsty": "v032", "a coin i can t buy a ladder here": "v033", "a feather i can t fly": "v034", "too big": "v035", "not shiny no": "v036", "i have feathers lots": "v037", "it flew over under through": "v038", "the magpie went between the trunks": "v039", "under the bridge above the water": "v040", "and it stopped it landed": "v041", "hmm i don t think so look at the pond where did it start": "v042", "not that one after the pond it flew into the trees": "v043", "almost then it went low under the bridge": "v044", "and where did it stop in its nest": "v045", "yes and then": "v046", "right what next": "v047", "good and finally": "v048", "i can see something small and gold near the big stone": "v049", "look at the old oak there is something in the hole": "v050", "something green is floating on the water": "v051", "look at the big log in front of us": "v052", "something shiny is hiding with the mushrooms": "v053", "the magpie dropped something black and white": "v054", "help you perhaps ask me what you want to know": "v055", "cross the bridge follow the path of the magpie then climb the tall pine": "v056", "you may cross": "v057", "hey you help us": "v058", "how we get to the nest": "v059", "we cross the bridge ok": "v060", "can you help us please": "v061", "how do we get to the nest": "v062", "can we cross the bridge please": "v063", "can i have the map please": "v064", "will you give me the map": "v065"};
 function vkey(t){ return String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function pickVoices(){
@@ -400,7 +400,7 @@ function strip(html){
   return (d.textContent||'').replace(/\s+/g,' ').trim();
 }
 function speak(who, text, queue){
-  if(!voiceOn) return;
+  if(!voiceOn || !hasVoices) return;
   /* 1) un enregistrement existe pour cette réplique */
   const f=VFILES[vkey(text)];
   if(f){
@@ -440,7 +440,7 @@ function speakSynth(who, text, queue){
   }catch(e){}
 }
 function spk(who,text){
-  if(!VFILES[vkey(text)]) return '';
+  if(!hasVoices || !VFILES[vkey(text)]) return '';
   return '<button class="spk" title="Listen again" data-who="'+who+'" data-say="'+
     text.replace(/"/g,'&quot;')+'">&#9658;</button>';
 }
@@ -784,15 +784,27 @@ $('btnVoice').onclick=function(){
                 if(VCLIP){ try{VCLIP.pause();}catch(e){} } }
 };
 $('btnRestart').onclick=function(){ if(confirm('Restart the chapter from the beginning?')) /* le bouton n'apparaît que si les enregistrements sont là */
-fetch('voices/v001.mp3',{method:'HEAD'}).then(function(r){
-  if(r.ok) document.getElementById('btnVoice').style.display='';
-}).catch(function(){});
+['mp3','m4a'].forEach(function(ext){
+  fetch('voices/v001.'+ext,{method:'HEAD'}).then(function(r){
+    if(r.ok && !hasVoices){
+      hasVoices=true;
+      document.getElementById('btnVoice').style.display='';
+      speakPanel();                       /* le panneau affiché retrouve ses boutons */
+    }
+  }).catch(function(){});
+});
 
 restart(); };
 /* le bouton n'apparaît que si les enregistrements sont là */
-fetch('voices/v001.mp3',{method:'HEAD'}).then(function(r){
-  if(r.ok) document.getElementById('btnVoice').style.display='';
-}).catch(function(){});
+['mp3','m4a'].forEach(function(ext){
+  fetch('voices/v001.'+ext,{method:'HEAD'}).then(function(r){
+    if(r.ok && !hasVoices){
+      hasVoices=true;
+      document.getElementById('btnVoice').style.display='';
+      speakPanel();                       /* le panneau affiché retrouve ses boutons */
+    }
+  }).catch(function(){});
+});
 
 restart();
 </script>
