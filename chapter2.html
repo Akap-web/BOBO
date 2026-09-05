@@ -79,6 +79,12 @@
           padding:12px 16px;font-size:19.5px;line-height:1.4}
   .bubble::before{content:"";position:absolute;left:-9px;top:20px;width:14px;height:14px;background:#fff;
           border-left:2px solid var(--terracotta);border-bottom:2px solid var(--terracotta);transform:rotate(45deg)}
+  .bubble{padding-right:44px}
+  .spk{position:absolute;right:9px;top:9px;width:26px;height:26px;border-radius:50%;
+       border:1.5px solid var(--rule);background:#fff;color:var(--ink-soft);cursor:pointer;
+       font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;
+       transition:transform .12s ease}
+  .spk:hover{transform:scale(1.12);color:var(--ink);border-color:var(--ink)}
   .bubble.bad{border-style:dashed;border-color:var(--ochre)}
   .bubble.bad::before{border-color:var(--ochre)}
   .bubble.stone{border-color:var(--stone);background:#F1F3F1;font-family:var(--display);font-size:21px}
@@ -156,6 +162,7 @@
         <span>Teacher</span>
         <label class="vol">Sounds<input type="range" id="volSfx" min="0" max="200" value="140"></label>
         <label class="vol">Forest<input type="range" id="volAmb" min="0" max="150" value="80"></label>
+        <button class="btn ghost on" id="btnVoice">Voices on</button>
         <button class="btn ghost" id="btnSpots">Show spots</button>
         <button class="btn ghost" id="btnSkip">Skip step</button>
         <button class="btn ghost" id="btnRestart">Restart chapter</button>
@@ -268,11 +275,9 @@ const AMBIENCE={
             extra:[], birds:[4000,11000], level:0.9},
   stream:  {layers:[{freq:180,gain:0.040,q:0.5,lfo:0.06},{freq:1500,gain:0.055,q:0.25,lfo:0.9},
                     {freq:4200,gain:0.030,q:0.3,lfo:1.6}],
-            extra:[{freq:1400,gain:0.10,q:0.22,lfo:0.8},{freq:3800,gain:0.06,q:0.28,lfo:1.5}],
-            birds:[9000,18000], level:0.95},
+            extra:[], birds:[9000,18000], level:0.95},
   treetop: {layers:[{freq:150,gain:0.055,q:0.4,lfo:0.05},{freq:3400,gain:0.028,q:0.35,lfo:0.11}],
-            extra:[{freq:170,gain:0.075,q:0.35,lfo:0.06}],
-            birds:[6000,13000], level:0.85}
+            extra:[], birds:[6000,13000], level:0.85}
 };
 function setAmbience(name){
   const c=ac(); if(!c) return;
@@ -308,8 +313,8 @@ function applyAmbience(name){
     /* l'enregistrement porte l'ambiance ; on l'habille selon le lieu */
     startForest();
     if(forestFilter){
-      if(name==='treetop'){ forestFilter.type='highpass'; forestFilter.frequency.value=420; }
-      else if(name==='stream'){ forestFilter.type='lowpass'; forestFilter.frequency.value=6000; }
+      if(name==='treetop'){ forestFilter.type='highpass'; forestFilter.frequency.value=300; forestFilter.Q.value=0.5; }
+      else if(name==='stream'){ forestFilter.type='lowpass'; forestFilter.frequency.value=3200; forestFilter.Q.value=0.4; }
       else { forestFilter.type='allpass'; }
     }
     if(name==='stream') cfg.extra.forEach(layer);      /* l'eau par-dessus */
@@ -361,6 +366,102 @@ const SFX={
 };
 function sfx(k){ if(soundOn&&SFX[k]) try{SFX[k]();}catch(e){} }
 
+/* ---------------- voix ---------------- */
+let voiceOn=true, VOICES=[], VMAP={}, VCLIP=null;
+const VFILES={"here we are the clearing look up there in the tall pine the magpie has got my map piece": "v001", "i can t fly hmm let s look around first maybe there are useful things here": "v002", "look carefully when you see something tell me where it is then your teacher clicks it": "v003", "yes": "v004", "six things a key a lantern a bottle a rope a coin and a feather some of them will be useful": "v005", "now to the bridge": "v006", "oh no a stone guardian he is blocking the bridge": "v007", "let me try": "v008", "he doesn t answer can you say it better": "v009", "ok ok how do i say it": "v010", "he moved his hand come on over the bridge": "v011", "the guardian said follow the path of the magpie but which way did it go these pictures are all mixed up": "v012", "tap them in the right order first then next finally": "v013", "so the nest is at the top of the tall pine let s go": "v014", "now tell me the story picture": "v015", "the tall pine the nest is right at the top i need to climb but how": "v016", "look in my bag what can help me climb": "v017", "try again what helps you climb": "v018", "the rope up we go here is the nest and here is the magpie": "v019", "let s ask nicely help me say it": "v020", "she won t give it maybe we can trade what can we give her look in my bag": "v021", "she wants something shiny": "v022", "good idea let s make a deal i start if i give you": "v023", "my map piece thank you look the piece shows part of the island where will the next one be": "v024", "see you at the next place": "v025", "mine shiny mine": "v026", "no it s shiny i love shiny things": "v027", "shiny for shiny deal": "v028", "if i give you": "v029", "a key there is no door in a tree": "v030", "a lantern it s daytime": "v031", "a bottle i m not thirsty": "v032", "a coin i can t buy a ladder here": "v033", "a feather i can t fly": "v034", "too big": "v035", "not shiny no": "v036", "i have feathers lots": "v037", "it flew over under through": "v038", "the magpie went between the trunks": "v039", "under the bridge above the water": "v040", "and it stopped it landed": "v041", "hmm i don t think so look at the pond where did it start": "v042", "not that one after the pond it flew into the trees": "v043", "almost then it went low under the bridge": "v044", "and where did it stop in its nest": "v045", "yes and then": "v046", "right what next": "v047", "good and finally": "v048", "i can see something small and gold near the big stone": "v049", "look at the old oak there is something in the hole": "v050", "something green is floating on the water": "v051", "look at the big log in front of us": "v052", "something shiny is hiding with the mushrooms": "v053", "the magpie dropped something black and white": "v054", "help you perhaps ask me what you want to know": "v055", "cross the bridge follow the path of the magpie then climb the tall pine": "v056", "you may cross": "v057", "hey you help us": "v058", "how we get to the nest": "v059", "we cross the bridge ok": "v060", "can you help us please": "v061", "how do we get to the nest": "v062", "can we cross the bridge please": "v063", "can i have the map please": "v064", "will you give me the map": "v065"};
+function vkey(t){ return String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function pickVoices(){
+  if(!window.speechSynthesis) return;
+  const all=speechSynthesis.getVoices().filter(v=>/^en(-|_|$)/i.test(v.lang));
+  if(!all.length) return;
+  VOICES=all;
+  const find=function(names){
+    for(const n of names){ const v=all.find(x=>x.name.toLowerCase().indexOf(n)>=0); if(v) return v; }
+    return null;
+  };
+  const male   = find(['daniel','oliver','arthur','alex','george','fred','rishi','aaron']);
+  const female = find(['serena','kate','moira','samantha','karen','fiona','tessa','martha']);
+  const deep   = find(['gordon','ralph','rocko','grandpa','albert','bad news','daniel']);
+  const bright = find(['tessa','karen','samantha','shelley','junior','moira']);
+  VMAP={
+    bobo:     {v: male   || all[0], rate:0.92, pitch:1.05},
+    guardian: {v: deep   || male || all[0], rate:0.70, pitch:0.45},
+    magpie:   {v: bright || female || all[0], rate:1.20, pitch:1.75},
+    you:      {v: female || all[0], rate:0.90, pitch:1.15}
+  };
+}
+if(window.speechSynthesis){
+  pickVoices();
+  speechSynthesis.onvoiceschanged=pickVoices;
+}
+function strip(html){
+  const d=document.createElement('div'); d.innerHTML=html;
+  d.querySelectorAll('.spk').forEach(function(e){ e.remove(); });
+  return (d.textContent||'').replace(/\s+/g,' ').trim();
+}
+function speak(who, text, queue){
+  if(!voiceOn) return;
+  /* 1) un enregistrement existe pour cette réplique */
+  const f=VFILES[vkey(text)];
+  if(f){
+    try{
+      if(!queue && VCLIP){ VCLIP.pause(); }
+      const a=new Audio('voices/'+f+'.m4a'); a.volume=0.95;
+      const c=AC, cfgA=AMBIENCE[AMB.cur];
+      if(c&&AMBBUS&&cfgA&&ambOn){
+        AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol*0.35,c.currentTime,0.15);
+        a.onended=function(){ AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol,c.currentTime,0.5); };
+      }
+      a.onerror=function(){ speakSynth(who,text,queue); };
+      VCLIP=a; a.play().catch(function(){ speakSynth(who,text,queue); });
+      return;
+    }catch(e){}
+  }
+  /* 2) sinon, la synthèse du navigateur */
+  speakSynth(who,text,queue);
+}
+function speakSynth(who, text, queue){
+  if(!voiceOn || !window.speechSynthesis) return;
+  const cfg=VMAP[who]||VMAP.bobo; if(!cfg||!cfg.v) return;
+  try{
+    if(!queue) speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.voice=cfg.v; u.lang=cfg.v.lang; u.rate=cfg.rate; u.pitch=cfg.pitch; u.volume=0.95;
+    /* la voix passe mieux si l'ambiance s'efface un instant */
+    const c=AC; const cfgA=AMBIENCE[AMB.cur];
+    if(c&&AMBBUS&&cfgA&&ambOn){
+      AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol*0.35,c.currentTime,0.15);
+      u.onend=function(){ AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol,c.currentTime,0.5); };
+    }
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function spk(who,text){
+  return '<button class="spk" title="Listen again" data-who="'+who+'" data-say="'+
+    text.replace(/"/g,'&quot;')+'">&#9658;</button>';
+}
+function bindSpk(root){
+  (root||document).querySelectorAll('.spk').forEach(function(b){
+    if(b._b) return; b._b=1;
+    b.onclick=function(ev){ ev.stopPropagation(); speak(b.dataset.who, b.dataset.say); };
+  });
+}
+/* lit la première bulle d'un personnage dès qu'elle s'affiche */
+function speakPanel(){
+  bindSpk($('panel'));
+  if(!voiceOn || !window.speechSynthesis) return;
+  const bs=$('panel').querySelectorAll('.bubble[data-who]');
+  if(!bs.length) return;
+  speechSynthesis.cancel();
+  if(VCLIP){ try{VCLIP.pause();}catch(e){} }
+  /* les enregistrements ne s'enchaînent pas tout seuls : on les met à la file */
+  let d=0;
+  bs.forEach(function(b,i){
+    setTimeout(function(){ speak(b.dataset.who,b.dataset.say,i>0); }, d);
+    d += VFILES[vkey(b.dataset.say)] ? Math.max(1800, b.dataset.say.length*62) : 0;
+  });
+}
+
 /* ---------------- data ---------------- */
 const OBJECTS=[
  {id:'key',    n:'a key',     where:'under the stone',  x:23.4,y:64.6, clue:'I can see something small and gold, near the big stone.'},
@@ -395,14 +496,25 @@ const TRADE={bank:['you','give','will','the map','me'],
 /* ---------------- state ---------------- */
 let act, found, reqIdx, chaseOrder, chaseSaid, climbed, traded, attempts={};
 const $=id=>document.getElementById(id);
-function help(t){ $('helpNow').textContent=t; }
+function help(t){ $('helpNow').textContent=t; setTimeout(speakPanel,60); }
 function setAct(n){
   act=n; for(let i=1;i<=4;i++){ const e=$('a'+i); e.className='act'+(i===n?' on':(i<n?' done':'')); }
 }
-function bobo(text,cls){ return '<div class="talk"><div class="who"><img src="'+A.bobo+'" alt=""><div class="nm">Bobo</div></div>'+
-  '<div class="bubble'+(cls?' '+cls:'')+'">'+text+'</div></div>'; }
-function other(name,text,cls){ return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble '+cls+'"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">'+name+'</b>'+text+'</div></div>'; }
-function you(text){ return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble you"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">You</b>'+text+'</div></div>'; }
+function bobo(text,cls){
+  const t=strip(text);
+  return '<div class="talk"><div class="who"><img src="'+A.bobo+'" alt=""><div class="nm">Bobo</div></div>'+
+    '<div class="bubble'+(cls?' '+cls:'')+'" data-who="bobo" data-say="'+t.replace(/"/g,'&quot;')+'">'+
+    text+spk('bobo',t)+'</div></div>'; }
+function other(name,text,cls){
+  const who = cls==='stone' ? 'guardian' : (cls==='bird' ? 'magpie' : 'bobo');
+  const t=strip(text);
+  return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble '+cls+
+    '" data-who="'+who+'" data-say="'+t.replace(/"/g,'&quot;')+'"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">'+
+    name+'</b>'+text+spk(who,t)+'</div></div>'; }
+function you(text){
+  const t=strip(text);
+  return '<div class="talk"><div class="who" style="width:0"></div><div class="bubble you"><b style="display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:3px">You</b>'+
+    text+spk('you',t)+'</div></div>'; }
 
 function restart(){ found=[]; reqIdx=0; chaseOrder=[]; chaseSaid=0; climbed=false; traded=false; attempts={}; title(); }
 
@@ -660,6 +772,12 @@ $('btnSkip').onclick=function(){
 $('btnSpots').onclick=function(){
   if(act!==1) return;
   document.querySelectorAll('.hot:not(.found)').forEach(h=>{ h.classList.remove('flash'); void h.offsetWidth; h.classList.add('flash'); });
+};
+$('btnVoice').onclick=function(){
+  voiceOn=!voiceOn; this.textContent=voiceOn?'Voices on':'Voices off';
+  this.classList.toggle('on',voiceOn);
+  if(!voiceOn){ if(window.speechSynthesis) speechSynthesis.cancel();
+                if(VCLIP){ try{VCLIP.pause();}catch(e){} } }
 };
 $('btnRestart').onclick=function(){ if(confirm('Restart the chapter from the beginning?')) restart(); };
 restart();
