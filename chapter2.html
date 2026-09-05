@@ -162,7 +162,7 @@
         <span>Teacher</span>
         <label class="vol">Sounds<input type="range" id="volSfx" min="0" max="200" value="140"></label>
         <label class="vol">Forest<input type="range" id="volAmb" min="0" max="150" value="80"></label>
-        <button class="btn ghost on" id="btnVoice">Voices on</button>
+        <button class="btn ghost on" id="btnVoice" style="display:none">Voices on</button>
         <button class="btn ghost" id="btnSpots">Show spots</button>
         <button class="btn ghost" id="btnSkip">Skip step</button>
         <button class="btn ghost" id="btnRestart">Restart chapter</button>
@@ -406,14 +406,14 @@ function speak(who, text, queue){
   if(f){
     try{
       if(!queue && VCLIP){ VCLIP.pause(); }
-      const a=new Audio('voices/'+f+'.m4a'); a.volume=0.95;
+      const a=new Audio('voices/'+f+'.mp3'); a.volume=0.95;
+      a.onerror=function(){ const b=new Audio('voices/'+f+'.m4a'); b.volume=0.95; VCLIP=b; b.play().catch(function(){}); };
       const c=AC, cfgA=AMBIENCE[AMB.cur];
       if(c&&AMBBUS&&cfgA&&ambOn){
         AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol*0.35,c.currentTime,0.15);
         a.onended=function(){ AMBBUS.gain.setTargetAtTime(cfgA.level*ambVol,c.currentTime,0.5); };
       }
-      a.onerror=function(){ speakSynth(who,text,queue); };
-      VCLIP=a; a.play().catch(function(){ speakSynth(who,text,queue); });
+      VCLIP=a; a.play().catch(function(){});
       return;
     }catch(e){}
   }
@@ -421,6 +421,9 @@ function speak(who, text, queue){
   speakSynth(who,text,queue);
 }
 function speakSynth(who, text, queue){
+  /* Voix génériques du système désactivées : on ne parle que si un
+     enregistrement existe. Rétablir en supprimant la ligne ci-dessous. */
+  return;
   if(!voiceOn || !window.speechSynthesis) return;
   const cfg=VMAP[who]||VMAP.bobo; if(!cfg||!cfg.v) return;
   try{
@@ -437,6 +440,7 @@ function speakSynth(who, text, queue){
   }catch(e){}
 }
 function spk(who,text){
+  if(!VFILES[vkey(text)]) return '';
   return '<button class="spk" title="Listen again" data-who="'+who+'" data-say="'+
     text.replace(/"/g,'&quot;')+'">&#9658;</button>';
 }
@@ -779,7 +783,17 @@ $('btnVoice').onclick=function(){
   if(!voiceOn){ if(window.speechSynthesis) speechSynthesis.cancel();
                 if(VCLIP){ try{VCLIP.pause();}catch(e){} } }
 };
-$('btnRestart').onclick=function(){ if(confirm('Restart the chapter from the beginning?')) restart(); };
+$('btnRestart').onclick=function(){ if(confirm('Restart the chapter from the beginning?')) /* le bouton n'apparaît que si les enregistrements sont là */
+fetch('voices/v001.mp3',{method:'HEAD'}).then(function(r){
+  if(r.ok) document.getElementById('btnVoice').style.display='';
+}).catch(function(){});
+
+restart(); };
+/* le bouton n'apparaît que si les enregistrements sont là */
+fetch('voices/v001.mp3',{method:'HEAD'}).then(function(r){
+  if(r.ok) document.getElementById('btnVoice').style.display='';
+}).catch(function(){});
+
 restart();
 </script>
 </body>
