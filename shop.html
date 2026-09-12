@@ -39,8 +39,11 @@
 
   /* ===== gear panel (teacher-only) ===== */
   .gearPanel{position:fixed;top:66px;right:14px;z-index:70;background:var(--white);
-       border-radius:16px;box-shadow:0 8px 24px rgba(60,40,10,.32);padding:16px 18px;width:250px}
+       border-radius:16px;box-shadow:0 8px 24px rgba(60,40,10,.32);padding:16px 18px;width:270px}
   .gearPanel[hidden]{display:none}
+  .howto{font-size:13px;line-height:1.55;color:var(--ink);background:var(--cream);
+       border-radius:10px;padding:10px 12px;margin-bottom:6px}
+  .howto b{color:var(--ochre-deep)}
   .gearPanel label{display:block;font-size:14px;color:var(--ink);margin:10px 0 4px}
   .gearPanel input[type=range]{width:100%;accent-color:var(--ochre)}
   .gearBtn{display:block;width:100%;margin-top:10px;padding:10px;border-radius:10px;
@@ -61,10 +64,10 @@
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.018)}}
   .plumWrap.resting{animation:breathe 3.6s ease-in-out infinite}
   .plumWrap.alert{transform:translateY(-3%) scale(1.03) rotate(0deg)}
-  .plumWrap.listening{transform:translateY(-2%) scale(1.05) rotate(-2deg) translateX(-2%)}
-  .plumWrap.confused{animation:tilt 1.1s ease}
-  @keyframes tilt{0%{transform:rotate(0)}25%{transform:rotate(7deg) translateY(1%)}
-       55%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}100%{transform:rotate(0)}}
+  .plumWrap.listening{animation:attentive 1.8s ease-in-out infinite;
+       transform-origin:bottom right}
+  @keyframes attentive{0%,100%{transform:translateY(-2%) scale(1.05) rotate(-2deg) translateX(-2%)}
+       50%{transform:translateY(-3%) scale(1.07) rotate(-3deg) translateX(-2%)}}
   .plumWrap.searching{transform:scaleX(-1) translateX(6%) translateY(-1%);filter:brightness(.4) saturate(.6) drop-shadow(0 10px 14px rgba(50,30,10,.35))}
   .plumWrap.searching .plumImg{animation:rummage .5s ease-in-out infinite}
   @keyframes rummage{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-1.5%) rotate(-1.5deg)}}
@@ -78,12 +81,14 @@
 
   .bell{position:absolute;left:30%;bottom:9%;width:9%;min-width:56px;max-width:100px;cursor:pointer;
        filter:drop-shadow(0 6px 8px rgba(50,30,10,.35));transition:transform .15s ease;
-       transform-origin:50% 15%;z-index:20}
+       transform-origin:50% 15%;z-index:20;animation:invite 1.6s ease-in-out infinite}
   .bell:hover{transform:scale(1.08)}
+  @keyframes invite{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
   .bell.ringing{animation:ring .5s ease}
   @keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(14deg)}
        60%{transform:rotate(-9deg)}80%{transform:rotate(5deg)}}
-  .bell.disabled{opacity:.5;cursor:default;filter:drop-shadow(0 6px 8px rgba(50,30,10,.2))}
+  .bell.disabled{opacity:.5;cursor:default;animation:none;
+       filter:drop-shadow(0 6px 8px rgba(50,30,10,.2))}
 
   .counterSlot{position:absolute;left:44%;bottom:7%;width:22%;height:28%;
        display:flex;align-items:center;justify-content:center;touch-action:none;z-index:15}
@@ -107,6 +112,9 @@
   .orderCard.swap{animation:cardSwap .4s ease}
   @keyframes cardSwap{0%{transform:rotate(-6deg) scale(1)}40%{transform:rotate(4deg) scale(.85);opacity:.4}
        100%{transform:rotate(-6deg) scale(1);opacity:1}}
+  .orderCard.inviting{animation:cardGlow 1.8s ease-in-out infinite}
+  @keyframes cardGlow{0%,100%{box-shadow:0 10px 20px rgba(50,30,10,.35)}
+       50%{box-shadow:0 10px 26px rgba(50,30,10,.35),0 0 0 6px rgba(217,138,61,.35)}}
 
   .shelfWood{position:absolute;left:0;top:0;bottom:0;width:15%;min-width:110px;max-width:200px;
        display:flex;flex-direction:column;justify-content:flex-end;padding:0 0 26% 0;
@@ -174,6 +182,16 @@
 </button>
 
 <div class="gearPanel" id="gearPanel" hidden>
+  <div class="howto">
+    <b>But du jeu</b> — Sophia décrit à voix haute l'objet
+    de sa fiche (couleur, taille, motif) pour l'obtenir.
+    Vocabulaire parlé, pas de lecture, pas de score : sa
+    récompense, c'est l'étagère qui se remplit.<br><br>
+    <b>Elle joue seule</b> — elle sonne la clochette, parle,
+    et Mr Plum va chercher l'objet tout seul après un court
+    instant. Elle clique l'objet pour le garder, ou le glisse
+    vers Mr Plum pour le rendre. Rien à cliquer pour toi.
+  </div>
   <label>Sounds
     <input type="range" id="volSfx" min="0" max="100" value="80">
   </label>
@@ -367,7 +385,7 @@ function sizeForFrame(imgEl, obj, family, capPct){
    STATE
    ================================================================== */
 let currentFamily=null, roundQueue=[], currentTarget=null;
-let mode='idle'; /* idle | listening | confused | searching | waiting */
+let mode='idle'; /* idle | alert | listening | searching | waiting */
 let shelfItems=[];
 let mouseMode=0;
 const MOUSE_LABELS=['Mouse: Teacher','Mouse: Sophia'];
@@ -386,6 +404,7 @@ function newBatch(){
 function nextCard(){
   bumpStep();
   $('chalk').classList.remove('show','fly');
+  $('orderCard').classList.remove('inviting');
   if(!roundQueue || roundQueue.length===0){ newBatch(); return; }
   currentTarget=roundQueue.shift();
   renderOrderCard(true);
@@ -404,7 +423,7 @@ function renderOrderCard(animate){
 function setMode(m){
   mode=m;
   const w=$('plumWrap');
-  w.classList.remove('resting','alert','listening','searching','confused','delighted','sorry');
+  w.classList.remove('resting','alert','listening','searching','delighted','sorry');
   if(m==='idle'||m==='waiting') w.classList.add('resting');
   else if(m==='listening') w.classList.add('listening');
 }
@@ -426,34 +445,29 @@ function ringBell(){
   guardedTimeout(function(){
     w.classList.remove('alert');
     setMode('listening');
+    $('orderCard').classList.add('inviting');
+    startSearching();
   }, 420);
 }
 
 /* ==================================================================
-   TEACHER JUDGES: ArrowRight = understood, ArrowDown = not understood
+   No human referee: she rings, she speaks, and after a natural pause
+   Mr Plum goes to fetch her object himself. Nothing to judge, nothing
+   that can block — matches the platform's own absolute rule.
    ================================================================== */
-function onArrowRight(){
+function startSearching(){
   if(mode!=='listening') return;
-  bumpStep();
-  mode='searching';
-  const w=$('plumWrap');
-  w.classList.remove('listening');
-  w.classList.add('searching');
-  sfx('stomp');
-  guardedTimeout(function(){ sfx('rummage'); }, 160);
-  guardedTimeout(deliverObject, 1150);
-}
-function onArrowDown(){
-  if(mode!=='listening') return;
-  bumpStep();
-  setMode('confused-hold');
-  const w=$('plumWrap');
-  w.classList.remove('listening');
-  w.classList.remove('confused'); void w.offsetWidth; w.classList.add('confused');
   guardedTimeout(function(){
-    w.classList.remove('confused');
-    setMode('listening');
-  }, 1150);
+    if(mode!=='listening') return;
+    bumpStep();
+    mode='searching';
+    const w=$('plumWrap');
+    w.classList.remove('listening');
+    w.classList.add('searching');
+    sfx('stomp');
+    guardedTimeout(function(){ sfx('rummage'); }, 160);
+    guardedTimeout(deliverObject, 1150);
+  }, 2600);
 }
 
 /* ==================================================================
@@ -461,6 +475,7 @@ function onArrowDown(){
    ================================================================== */
 function deliverObject(){
   bumpStep();
+  $('orderCard').classList.remove('inviting');
   const w=$('plumWrap');
   w.classList.remove('searching');
   w.classList.add('resting');
@@ -639,20 +654,12 @@ function forceSuccess(){
   $('bell').classList.add('disabled');
   mode='searching';
   const w=$('plumWrap');
-  w.classList.remove('resting','alert','listening','confused');
+  w.classList.remove('resting','alert','listening');
   w.classList.add('searching');
   sfx('stomp');
   guardedTimeout(function(){ sfx('rummage'); }, 140);
   guardedTimeout(deliverObject, 850);
 }
-
-/* ==================================================================
-   KEYBOARD (teacher) + CLICKS
-   ================================================================== */
-document.addEventListener('keydown', function(e){
-  if(e.key==='ArrowRight'){ e.preventDefault(); onArrowRight(); }
-  else if(e.key==='ArrowDown'){ e.preventDefault(); onArrowDown(); }
-});
 
 /* ==================================================================
    BOOT + CHROME
