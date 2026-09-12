@@ -217,7 +217,7 @@
     <input type="range" id="volSfx" min="0" max="100" value="80">
   </label>
   <label>Ambience
-    <input type="range" id="volAmb" min="0" max="100" value="18">
+    <input type="range" id="volAmb" min="0" max="100" value="0">
   </label>
   <button class="gearBtn" id="btnSkip">Skip this one</button>
   <button class="gearBtn" id="btnRestart">Restart</button>
@@ -289,7 +289,7 @@ const SHOP_DATA={"_lisezmoi": {"role": "Contenu du jeu de la boutique. Le moteur
    AUDIO
    ================================================================== */
 let audioCtx=null, SFXBUS=null, AMBBUS=null, ambNodes=null;
-let sfxVol=.8, ambVol=.18;
+let sfxVol=.8, ambVol=0;
 function ac(){
   if(!audioCtx){
     audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -337,16 +337,23 @@ const SFX={
 };
 function sfx(name){ const f=SFX[name]; if(f) f(); }
 function startAmbience(){
+  /* a soft, unpitched room-tone hum (filtered noise), not sustained
+     musical notes — quiet shop presence, never a nagging drone. Off
+     by default; the teacher opts in via the Ambience slider. */
   const c=audioCtx;
-  const o1=c.createOscillator(), o2=c.createOscillator();
-  o1.type='sine'; o1.frequency.value=196; o2.type='sine'; o2.frequency.value=246.9;
-  const lfo=c.createOscillator(); lfo.type='sine'; lfo.frequency.value=.08;
-  const lfoGain=c.createGain(); lfoGain.gain.value=.035;
-  const g=c.createGain(); g.gain.value=.06;
+  const bufSize=c.sampleRate*2;
+  const buf=c.createBuffer(1,bufSize,c.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<bufSize;i++) data[i]=Math.random()*2-1;
+  const src=c.createBufferSource(); src.buffer=buf; src.loop=true;
+  const f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=280; f.Q.value=.4;
+  const lfo=c.createOscillator(); lfo.type='sine'; lfo.frequency.value=.06;
+  const lfoGain=c.createGain(); lfoGain.gain.value=.02;
+  const g=c.createGain(); g.gain.value=.05;
   lfo.connect(lfoGain); lfoGain.connect(g.gain);
-  o1.connect(g); o2.connect(g); g.connect(AMBBUS);
-  o1.start(); o2.start(); lfo.start();
-  ambNodes={o1:o1,o2:o2,lfo:lfo,g:g};
+  src.connect(f); f.connect(g); g.connect(AMBBUS);
+  src.start(); lfo.start();
+  ambNodes={src:src,lfo:lfo,g:g};
 }
 
 /* ==================================================================
