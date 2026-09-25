@@ -853,19 +853,24 @@ function burst(x,y){
       {duration:600+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'}).onfinish=()=>d.remove();
   }
 }
-/* la pluie : des traits qui tombent, de moins en moins nombreux */
+/* la pluie, dehors seulement : elle tombe derrière la vitre du hublot, de moins en moins dense */
+const PORT={x:201,y:236,rx:143,ry:163};                 /* la vitre du hublot, en pixels du fond de The Storm */
 function rain(){
-  const g=fxCanvas(),drops=[];let dens=1,want=1;
-  const add=y=>({x:Math.random()*(innerWidth+200)-100,y:y===undefined?-20:y,v:9+Math.random()*7,l:14+Math.random()*16});
-  for(let i=0;i<Math.round(innerWidth*innerHeight/5200);i++)drops.push(add(Math.random()*innerHeight));
+  const g=fxCanvas(),drops=[];let dens=1,want=1,E=null;
+  const glass=()=>{const c=toScreen(PORT.x,PORT.y);E={x:c.x,y:c.y,rx:PORT.rx*c.k,ry:PORT.ry*c.k,k:c.k};};
+  const add=top=>({x:E.x-E.rx-40+Math.random()*(E.rx*2+40),y:top?E.y-E.ry-Math.random()*20:E.y-E.ry+Math.random()*E.ry*2,
+    v:(4.5+Math.random()*3.5)*E.k,l:(7+Math.random()*9)*E.k});
+  glass();fxSized.push(()=>{glass();drops.forEach((d,i)=>Object.assign(d,add(false)));});
+  for(let i=0;i<160;i++)drops.push(add(false));
   fxLoop(()=>{
     dens+=(want-dens)*.025;g.clearRect(0,0,innerWidth,innerHeight);
     const n=Math.round(drops.length*dens);if(n<1&&want===0)return false;
-    g.strokeStyle='rgba(208,215,255,.42)';g.lineWidth=1.4;g.beginPath();
-    for(let i=0;i<n;i++){const d=drops[i];d.y+=d.v;d.x+=d.v*.22;
-      if(d.y-d.l>innerHeight)Object.assign(d,add());
-      g.moveTo(d.x,d.y);g.lineTo(d.x-d.l*.22,d.y-d.l);}
-    g.stroke();
+    g.save();g.beginPath();g.ellipse(E.x,E.y,E.rx,E.ry,0,0,Math.PI*2);g.clip();
+    g.strokeStyle='rgba(214,220,255,.5)';g.lineWidth=Math.max(1,1.1*E.k);g.beginPath();
+    for(let i=0;i<n;i++){const d=drops[i];d.y+=d.v;d.x+=d.v*.2;
+      if(d.y-d.l>E.y+E.ry)Object.assign(d,add(true));
+      g.moveTo(d.x,d.y);g.lineTo(d.x-d.l*.2,d.y-d.l);}
+    g.stroke();g.restore();
   });
   return {set(v){want=Math.max(0,v);}};
 }
