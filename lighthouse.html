@@ -408,6 +408,14 @@ body[data-board=logbook]:not(.dawn) #journal{display:block}
   body[data-board=logbook]:not(.dawn) .wrap{margin-top:0}
 }
 
+/* The Tool Chest : la carte de vocabulaire (image + mot en grand) après la bonne réponse */
+.tooltag{display:flex;align-items:center;justify-content:center;margin:6px auto 0;animation:tagin .55s ease-out}
+@keyframes tagin{0%{opacity:0;transform:scale(.5)}70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+.tooltag img{width:120px;height:120px;border-radius:16px;box-shadow:0 0 0 3px var(--lamp),0 6px 20px var(--shadow);margin-right:22px;flex:0 0 auto}
+.tooltag span{font-size:46px;font-size:clamp(32px,5vw,52px);font-weight:700;line-height:1.1;color:var(--lamp);
+  text-shadow:0 0 22px rgba(242,193,78,.45)}
+@media (max-width:600px){.tooltag img{width:84px;height:84px;margin-right:14px}.tooltag span{font-size:32px}}
+
 /* la fin : calme, sans score */
 .ending{text-align:center;padding:34px 8px 10px}
 .ending p{margin:.12em 0;font-size:48px;font-size:clamp(26px,4.4vw,48px);font-weight:600;color:var(--pale);
@@ -549,15 +557,15 @@ const GAME={
   prompt:"Long action or short action? Choose the right form.",
   items:[
    ["I was climbing the stairs when I ___ a strange noise.","heard",["heard","was hearing","hear"]],
-   ["She ___ in the logbook when all the lights went out.","was writing",["was writing","wrote","writes"]],
-   ["While the wind ___, we closed every window in the tower.","was blowing",["was blowing","blew","blows"]],
+   ["She ___ in the logbook when all the lights went out, so she stopped.","was writing",["was writing","wrote","writes"]],
+   ["The wind ___ hard when suddenly it stopped.","was blowing",["was blowing","blew","blows"]],
    ["The radio ___ three times last night.","rang",["rang","was ringing","rings"]],
-   ["They were watching the sea when a small boat ___.","appeared",["appeared","was appearing","appears"]],
-   ["He ___ supper when the alarm bell rang.","was cooking",["was cooking","cooked","cooks"]],
+   ["They were watching the sea when suddenly a small boat ___.","appeared",["appeared","was appearing","appears"]],
+   ["He was cooking supper when suddenly a big wave ___ the window.","hit",["hit","was hitting","hits"]],
    ["What ___ you doing at midnight last night?","were",["were","did","was"]],
-   ["The bell ___ while we were sleeping.","rang",["rang","was ringing","ring"]],
-   ["I dropped the lamp while I ___ down the ladder.","was coming",["was coming","came","come"]],
-   ["When the storm ___, everybody ran inside.","started",["started","was starting","starts"]]
+   ["The bell ___ once while we were sleeping.","rang",["rang","was ringing","ring"]],
+   ["I ___ down the ladder when suddenly I dropped the lamp.","was coming",["was coming","came","come"]],
+   ["As soon as the storm ___, everybody ran inside.","started",["started","was starting","starts"]]
   ]},
 
  machine:{ title:"The Machine Room", kind:"match", bg:"machine", amb:"machine", pic:"fault_",
@@ -1625,12 +1633,20 @@ function drawPick(t){
     c.onclick=()=>{actx();
       if(id===ans){S.good();c.classList.add('good');fxHit(c);
         g.querySelectorAll('.pcard').forEach(x=>{if(x!==c)x.classList.add('done');});
-        setTimeout(()=>done(TOOLNAME[ans]||'Yes.',idx>=t.items.length-1),650);}
+        setTimeout(()=>{toolTag(g,c,ans);done('Yes.',idx>=t.items.length-1);},650);}
       else{nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
     };
     g.appendChild(c);
   });
   b.appendChild(g);
+}
+
+/* la bonne réponse trouvée, l'outil et son nom prennent toute la place : une carte de vocabulaire à retenir */
+function toolTag(row,card,id){
+  const tag=el('div','tooltag'),old=card.querySelector('img'),w=(TOOLNAME[id]||id).replace(/\.$/,'');
+  if(old&&old.naturalWidth){const im=el('img');im.alt='';im.src=old.src;tag.appendChild(im);}  /* image arrivée : on la reprend ; sinon le mot seul */
+  tag.appendChild(el('span',null,w.charAt(0).toLowerCase()+w.slice(1)));
+  row.parentNode.replaceChild(tag,row);
 }
 
 /* ------------------------------------------------------- déduire */
@@ -1740,6 +1756,7 @@ document.addEventListener('error',e=>{
   const word=w=>{const d=document.createElement('span');d.className='tname';d.textContent=w;t.replaceWith(d);};
   if(card)word(TOOLWORD[card.dataset.id]||card.dataset.id);
   else if(sc)word(ANIMAL[sc.dataset.id]||sc.dataset.id);
+  else if(t.closest('.tooltag'))t.parentNode.removeChild(t);
   else if(lost){const m=/found_(\w+)\.png/.exec(t.src),sp=document.createElement('span');sp.textContent=(m&&LOSTEMO[m[1]])||'✨';t.replaceWith(sp);}
   else t.style.visibility='hidden';
 },true);
