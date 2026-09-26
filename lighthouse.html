@@ -295,6 +295,17 @@ body.allclear .bg.on{filter:sepia(.55) saturate(.7) hue-rotate(-8deg) brightness
 .lost img{height:92px;width:auto;filter:drop-shadow(0 0 14px rgba(255,220,140,.95));animation:bob 2.6s ease-in-out 1.2s infinite}
 @keyframes bob{50%{transform:translateY(-5px)}}
 
+/* le chat du phare (CAT.md) : en bas à gauche, il respire, il réagit, il ne parle jamais */
+#cat{position:fixed;left:1.2vw;bottom:1vh;z-index:2;height:min(170px,22vh);aspect-ratio:153/237;cursor:pointer;
+  transform-origin:50% 100%;-webkit-tap-highlight-color:transparent;transition:bottom .35s ease,top .35s ease}
+#cat .cb{position:absolute;inset:0;transform-origin:50% 100%;animation:breathe 4.2s ease-in-out infinite}
+#cat img{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+#cat[data-pose=hello] img[data-p=hello],#cat[data-pose=thinking] img[data-p=thinking],#cat[data-pose=cheer] img[data-p=cheer],
+#cat[data-pose=surprised] img[data-p=surprised],#cat[data-pose=sleepy] img[data-p=sleepy]{opacity:1}
+#cat.behind{z-index:0}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.024)}}
+.shelf{left:calc(1.2vw + min(170px,22vh) * .646 + 18px)}
+
 /* l'île en mer calme : Sophia répond en regardant le paysage. Le plateau se fait petit et clair,
    et reste sur la mer, en bas à droite, loin du port, des bateaux, des oiseaux et du soleil. */
 body[data-sea=calm][data-board=people]:not(.dawn) #stage{display:flex;flex-direction:column;padding-bottom:0}
@@ -338,6 +349,7 @@ body[data-sea=calm][data-board=people]:not(.dawn) #hint{display:none}
   .scard img{max-width:92px}
   .clue,.why{margin-top:12px;padding:10px 12px;font-size:14.5px}
   .shelf{top:70px;bottom:auto;left:3vw;height:auto;width:94vw}
+  #cat{height:84px;left:6px}
   .lost{height:72px}
   .lost span{font-size:56px}
   .lost img{height:68px}
@@ -402,6 +414,9 @@ body.gate #gate.bad{animation:shake .4s}
 
 <div id="bgs"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div></div>
 <div id="fx"><div id="scene"></div></div>
+<div id="cat" data-pose="hello" aria-hidden="true"><div class="cb">
+  <img data-p="hello" alt="" src="lighthouse_assets/cat_hello.png"><img data-p="thinking" alt="" src="lighthouse_assets/cat_thinking.png"><img data-p="cheer" alt="" src="lighthouse_assets/cat_cheer.png"><img data-p="surprised" alt="" src="lighthouse_assets/cat_surprised.png"><img data-p="sleepy" alt="" src="lighthouse_assets/cat_sleepy.png">
+</div></div>
 
 <div id="top">
   <a id="home" href="index.html" title="Back">&#8962;</a>
@@ -761,7 +776,8 @@ Object.assign(S,{
   birds(){for(let i=0;i<6;i++)soon(()=>tone(2500+Math.random()*700,.1,'sine',.05,3300+Math.random()*600),i*120+Math.random()*80);},
   boat(){hiss(2.6,650,.5,.06,'lowpass',240);},
   sun(){[523,659,784,1047].forEach((f,i)=>soon(()=>pad(f,2.6,.045),i*210));},
-  beam(){pad(1568,1.3,.035);soon(()=>pad(2093,1.3,.03),170);}
+  beam(){pad(1568,1.3,.035);soon(()=>pad(2093,1.3,.03),170);},
+  purr(){pad(523,.5,.06);soon(()=>pad(659,.6,.05),110);}
 });
 
 /* ------------------------------------------------------------ audio : ambiance (fichiers, jamais synthétisée) */
@@ -1009,7 +1025,7 @@ function fxClear(){
   document.body.classList.remove('stormover','allclear');FXB=null;
 }
 function fxStart(k){fxClear();if(k&&FXBOARD[k]){FXB=Object.create(FXBOARD[k]);if(FXB.start)FXB.start();}}
-function fxHit(a,b){if(FXB&&FXB.hit)FXB.hit(a,b);}
+function fxHit(a,b){const wow=FXB&&FXB.hit?FXB.hit(a,b):false;catGood(!!wow);}
 /* un objet qui s'envole d'un point de l'écran vers un autre, en arc */
 function fly(from,x,y,o){
   o=o||{};const r=from.getBoundingClientRect(),c=from.cloneNode(true);
@@ -1102,10 +1118,10 @@ const FXBOARD={
       fxLater(()=>S.thunder(),280+Math.random()*500);
       this.strike((3000+this.n*2800)*(.75+Math.random()*.5));},ms);},
     hit(){this.n++;const left=1-this.n/this.max;this.rain.set(left);
-      if(left<=0){clearTimeout(this.t);document.body.classList.add('stormover');S.hush();}else S.lull();}
+      if(left<=0){clearTimeout(this.t);document.body.classList.add('stormover');S.hush();return true;}else S.lull();}
   },
   /* la carte réparée reprend ses couleurs (le défaut, lui, est animé en CSS) */
-  machine:{hit(cell){cell.classList.remove('broken');cell.classList.add('fixed');S.repair();}},
+  machine:{hit(cell){cell.classList.remove('broken');cell.classList.add('fixed');S.repair();return true;}},
   /* le bon outil s'envole vers la machine du fond */
   tools:{
     start(){this.n=0;this.h=fxEl('halo',231,72,110);this.h.style.opacity=.2;},
@@ -1136,7 +1152,7 @@ const FXBOARD={
     start(){this.n=T.rounds[0][1].length;this.dots=[];
       for(let i=0;i<this.n;i++)this.dots.push(fxEl('dot',138,110+i*250/Math.max(1,this.n-1),40));},
     hit(i){const d=this.dots[i];if(d)d.classList.add('lit');S.ping(i);
-      if(i>=this.n-1)fxLater(()=>{document.body.classList.add('allclear');fxEl('lensglow',138,225,620);fxEl('alarmoff',52,318,30);S.bright();},500);}
+      if(i>=this.n-1){fxLater(()=>{document.body.classList.add('allclear');fxEl('lensglow',138,225,620);fxEl('alarmoff',52,318,30);S.bright();},500);return true;}}
   },
   /* l'objet disparu sort de la bonne carte et revient se poser au centre */
   suspects:{hit(card,R){
@@ -1145,7 +1161,7 @@ const FXBOARD={
     const e=slot.firstChild,cr=card.getBoundingClientRect(),er=e.getBoundingClientRect();
     e.animate([{transform:'translate('+(cr.left+cr.width/2-er.left-er.width/2)+'px,'+(cr.top+cr.height/2-er.top-er.height/2)+'px) scale(.2)',opacity:0},
       {opacity:1,offset:.25},{transform:'translate(0,-16px) scale(1.15)',offset:.8},{transform:'none'}],{duration:1100,easing:'cubic-bezier(.3,.7,.3,1)'});
-    S.sparkle();}},
+    S.sparkle();return true;}},
   /* le paysage s'anime : des oiseaux, un bateau qui sort du port, le soleil qui monte, la lumière qui se réchauffe */
   people:{
     start(){this.n=0;this.max=T.items.length;this.warm=fxEl('warmth',388,214,2600);this.sun=fxEl('sun',388,214,130);
@@ -1191,6 +1207,36 @@ function completeBoard(k){
   saveProg();tabs(pop);if(grew)setTimeout(()=>S.beam(),700);
 }
 
+/* ------------------------------------------------------------ le chat du phare (CAT.md) */
+/* Il ne parle pas, n'écrit pas, ne juge pas : il réagit. Au repos il réfléchit avec elle ; une bonne
+   réponse le fait sauter de joie ; une scène qui change l'émerveille ; une erreur le fait seulement
+   pencher la tête et réfléchir encore. Jamais de déception, jamais d'insistance quand elle prend son temps. */
+const CAT=document.getElementById('cat');
+let catRest='hello',catT=0,catQ=[];
+function catRun(){clearTimeout(catT);const n=catQ.shift();
+  if(!n){CAT.dataset.pose=catRest;return;}
+  CAT.dataset.pose=n[0];if(n[2])n[2]();catT=setTimeout(catRun,n[1]);}
+function catSay(seq){catQ=seq.slice();catRun();}                               /* à la place de ce qu'il faisait */
+function catThen(seq){if(catQ.length||CAT.dataset.pose!==catRest)catQ=catQ.concat(seq);else catSay(seq);}  /* à la suite */
+const catJump=()=>CAT.animate([{transform:'translateY(0)'},{transform:'translateY(-13%)',offset:.35},{transform:'translateY(0)',offset:.68},
+  {transform:'translateY(-3%)',offset:.84},{transform:'translateY(0)'}],{duration:720,easing:'ease-out'});
+const catTilt=()=>CAT.animate([{transform:'rotate(0)'},{transform:'rotate(-7deg)',offset:.3},{transform:'rotate(-7deg)',offset:.72},
+  {transform:'rotate(0)'}],{duration:1400,easing:'ease-in-out'});
+function catGood(wow){if(wow)catSay([['surprised',1000]]);else catSay([['cheer',1500,catJump]]);}
+function catHmm(){catSay([['thinking',1400,catTilt]]);}
+function nope(){S.nope();catHmm();}
+/* sur téléphone, il se pose sur le haut du plateau ; ailleurs il reste en bas à gauche */
+function catPlace(){
+  CAT.classList.remove('behind');
+  if(innerWidth>600){CAT.style.bottom='';CAT.style.top='';return;}
+  if(document.body.dataset.screen!=='board'){CAT.style.bottom='';CAT.style.top='70px';return;}
+  const w=document.querySelector('.wrap').getBoundingClientRect(),h=CAT.offsetHeight,want=innerHeight-w.top-4,max=innerHeight-66-h;
+  CAT.style.top='';CAT.style.bottom=Math.min(want,max)+'px';if(want>max)CAT.classList.add('behind');
+}
+addEventListener('resize',catPlace);
+if(window.ResizeObserver)new ResizeObserver(()=>catPlace()).observe(document.querySelector('.wrap'));
+CAT.onclick=()=>{actx();const p=Math.random()<.5?'hello':'cheer';catSay([[p,1300,p==='cheer'?catJump:null]]);S.purr();};
+
 /* ------------------------------------------------------------ helpers */
 const $=id=>document.getElementById(id);
 let cur=null,idx=0,round=0,sel=null,drawId=0,doneFor=-1;
@@ -1224,11 +1270,13 @@ function go(k){
   document.body.dataset.screen='board';document.body.dataset.board=k;document.body.classList.remove('dawn');
   setBg(BG[T.bg]);ambient(T.amb);
   draw();fxStart(k);
+  catRest='thinking';catSay([['hello',1000]]);catPlace();
 }
 function goCover(){
   cur=null;sel=null;T=null;drawId++;fxStart(null);
   document.body.dataset.screen='cover';document.body.dataset.board='cover';document.body.classList.remove('dawn','gate');
   setBg(BG.cover);ambient('cover');tabs();
+  catRest='hello';catSay([]);catPlace();
 }
 function setSea(s){
   sea=s;prog=PROG[s];document.body.dataset.sea=s;
@@ -1262,6 +1310,7 @@ function nextBoard(){go(ORDER[ORDER.indexOf(cur)+1]);}
 
 function done(msg,last,keep){
   if(doneFor===drawId)return;doneFor=drawId;
+  if(last){if(CAT.dataset.pose==='surprised')catThen([['cheer',2000,catJump]]);else catSay([['cheer',2000]]);}
   if(last){completeBoard(cur);if(cur===FINAL)return ending();}
   S.win();if(!keep)$('say').innerHTML=msg;$('hint').textContent='';
   const n=$('next');n.textContent='Next';n.classList.add('on');
@@ -1278,7 +1327,7 @@ function ending(){
   const again=el('button',null,'Start again');
   again.onclick=()=>{actx();goCover();};
   e.appendChild(again);b.appendChild(e);
-  tabs();S.chime();
+  tabs();S.chime();catRest='sleepy';catPlace();
 }
 function draw(){
   drawId++;
@@ -1299,7 +1348,7 @@ function drawFix(t){
     const e=el('span','tok click',tok);
     e.onclick=()=>{actx();
       if(i===badI){S.good();e.className='tok gap';e.textContent='?';e.id='slot';step2();}
-      else{S.nope();e.classList.add('bad');setTimeout(()=>e.classList.remove('bad'),400);}
+      else{nope();e.classList.add('bad');setTimeout(()=>e.classList.remove('bad'),400);}
     };
     s.appendChild(e);
   });
@@ -1313,7 +1362,7 @@ function drawFix(t){
       x.onclick=()=>{actx();
         if(op===ans){S.good();const g=$('slot');g.textContent=op;g.className='tok fixed';fxHit();
           x.classList.add('good');setTimeout(()=>done('Corrected.',idx>=t.items.length-1),650);}
-        else{S.nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
+        else{nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
       };
       o.appendChild(x);
     });
@@ -1341,7 +1390,7 @@ function drawGap(t){
     x.onclick=()=>{actx();
       if(op===ans){S.good();const g=$('slot');g.textContent=op;g.className='tok fixed';fxHit();
         x.classList.add('good');setTimeout(()=>done('Yes.',idx>=t.items.length-1),650);}
-      else{S.nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
+      else{nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
     };
     o.appendChild(x);
   });
@@ -1378,7 +1427,7 @@ function drawMatch(t){
         S.good();const s=sel;s.classList.add('done');c.classList.add('done');sel=null;fxHit(s);
         $('hint').textContent='';left--;
         if(left<=0)setTimeout(()=>done('All matched.',round>=t.rounds.length-1),600);
-      }else{S.nope();c.classList.add('bad');sel.classList.add('bad');
+      }else{nope();c.classList.add('bad');sel.classList.add('bad');
         const s=sel;setTimeout(()=>{c.classList.remove('bad');s.classList.remove('bad');},400);}
     };
     R.appendChild(c);
@@ -1410,7 +1459,7 @@ function drawOrder(t){
         s.lastChild.textContent=st;s.classList.add('filled');
         x.classList.add('done');fxHit(want,steps.length);want++;
         if(want>=steps.length)setTimeout(()=>done('That is the right order.',round>=t.rounds.length-1),650);
-      }else{S.nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
+      }else{nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
     };
     pool.appendChild(x);
   });
@@ -1433,7 +1482,7 @@ function drawPick(t){
       if(id===ans){S.good();c.classList.add('good');fxHit(c);
         g.querySelectorAll('.pcard').forEach(x=>{if(x!==c)x.classList.add('done');});
         setTimeout(()=>done(TOOLNAME[ans]||'Yes.',idx>=t.items.length-1),650);}
-      else{S.nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
+      else{nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
     };
     g.appendChild(c);
   });
@@ -1464,7 +1513,7 @@ function drawDeduce(t){
         row.querySelectorAll('.scard').forEach(x=>{if(x!==c)x.classList.add('dim');});row.classList.add('named');
         why.innerHTML='<p>'+R.why+'</p><p class="tell">Why? Tell me.</p>';why.style.display='block';fxHit(c,R);
         setTimeout(()=>done('',round>=t.rounds.length-1,true),700);
-      }else{S.nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
+      }else{nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
     };
     row.appendChild(c);
   });
