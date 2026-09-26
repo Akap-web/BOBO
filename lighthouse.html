@@ -698,7 +698,7 @@ const CALM={
    ["The beach is ___ the cliff and the sea.","between",["between","on"]]
   ]}
 };
-/* le nom de l'outil, écrit après la bonne réponse ; celui des animaux, en mer calme */
+/* le nom de l'outil et celui des animaux, écrits après la bonne réponse */
 const TOOLNAME={screwdriver:'A screwdriver.',spanner:'A spanner.',hammer:'A hammer.',cutters:'Wire cutters.',
   saw:'A saw.',brush:'A paintbrush.',tape:'A tape measure.',oilcan:'An oil can.'};
 const ANIMAL={gull:'the gull',seal:'the seal',crab:'the crab',puffin:'the puffin'};
@@ -1546,7 +1546,7 @@ function drawDeduce(t){
     const c=el('button','scard');c.dataset.id=id;
     const im=el('img');im.decoding='async';im.src=A('suspect_'+id+'.jpg');im.alt='';
     c.appendChild(im);c.appendChild(el('span',null,text));
-    if(sea==='calm'&&ANIMAL[id])c.appendChild(el('b','nm',ANIMAL[id]));
+    if(ANIMAL[id])c.appendChild(el('b','nm',ANIMAL[id]));
     c.onclick=()=>{actx();
       if(id===R.ans){
         S.good();c.classList.add('good');
