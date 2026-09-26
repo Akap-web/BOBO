@@ -303,6 +303,24 @@ body.allclear .bg.on{filter:sepia(.55) saturate(.7) hue-rotate(-8deg) brightness
 #cat[data-pose=hello] img[data-p=hello],#cat[data-pose=thinking] img[data-p=thinking],#cat[data-pose=cheer] img[data-p=cheer],
 #cat[data-pose=surprised] img[data-p=surprised],#cat[data-pose=sleepy] img[data-p=sleepy]{opacity:1}
 #cat.behind{z-index:0}
+/* le nom du chat : demandé une fois, écrit en petit sous lui */
+.catname{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:3px;white-space:nowrap;display:none;
+  font-size:12.5px;line-height:1.25;padding:2px 9px;border-radius:999px;background:rgba(15,26,44,.72);color:#f3e6c4;pointer-events:none}
+#cat.named .catname{display:block}
+#cat.named{bottom:calc(1vh + 22px)}
+#naming{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:16px;
+  background:rgba(10,16,30,.55);backdrop-filter:blur(3px)}
+body.naming #naming{display:flex}
+body.naming #cat{visibility:hidden}
+#naming form{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:100%;padding:22px 24px 24px;border-radius:24px;
+  background:rgba(15,26,44,.9);border:1px solid rgba(242,193,78,.45);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#naming img{height:min(180px,26vh);width:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
+#naming h2{margin:0;font-size:clamp(24px,3.2vw,32px);color:#f2c14e;font-weight:700;text-align:center}
+#naming .row{display:flex;gap:10px;align-items:center}
+#catin{width:min(52vw,240px);padding:12px 16px;border-radius:999px;border:1px solid rgba(233,237,245,.35);
+  background:rgba(255,255,255,.08);color:#e9edf5;font:inherit;font-size:22px;text-align:center;outline:none}
+#catin:focus{border-color:#f2c14e}
+#catok{padding:12px 22px;border-radius:999px;background:#f2c14e;color:#16233a;font-size:20px;font-weight:700;flex:0 0 auto}
 @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.024)}}
 .shelf{left:calc(1.2vw + min(170px,22vh) * .646 + 18px)}
 
@@ -414,7 +432,7 @@ body.gate #gate.bad{animation:shake .4s}
 
 <div id="bgs"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div></div>
 <div id="fx"><div id="scene"></div></div>
-<div id="cat" data-pose="hello" aria-hidden="true"><div class="cb">
+<div id="cat" data-pose="hello" aria-hidden="true"><span class="catname" id="catname"></span><div class="cb">
   <img data-p="hello" alt="" src="lighthouse_assets/cat_hello.png"><img data-p="thinking" alt="" src="lighthouse_assets/cat_thinking.png"><img data-p="cheer" alt="" src="lighthouse_assets/cat_cheer.png"><img data-p="surprised" alt="" src="lighthouse_assets/cat_surprised.png"><img data-p="sleepy" alt="" src="lighthouse_assets/cat_sleepy.png">
 </div></div>
 
@@ -434,6 +452,7 @@ body.gate #gate.bad{animation:shake .4s}
   <button id="swap"></button>
   <button id="unlock">Unlock all</button>
   <button id="reset">Reset progress</button>
+  <button id="rename">Change the cat's name</button>
 </div>
 
 <div id="cover"><div class="covbox">
@@ -448,6 +467,12 @@ body.gate #gate.bad{animation:shake .4s}
     <button id="passgo" type="submit" aria-label="Go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
   </form>
 </div></div>
+
+<div id="naming"><form id="nameform" autocomplete="off">
+  <img alt="" src="lighthouse_assets/cat_hello.png">
+  <h2>What's his name?</h2>
+  <div class="row"><input id="catin" type="text" maxlength="12" aria-label="Name" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done"><button id="catok" type="submit">OK</button></div>
+</form></div>
 
 <div id="stage"><div class="wrap">
   <div id="say"></div>
@@ -1270,7 +1295,8 @@ function catPlace(){
   CAT.classList.remove('behind');
   if(innerWidth>600){CAT.style.bottom='';CAT.style.top='';return;}
   if(document.body.dataset.screen!=='board'){CAT.style.bottom='';CAT.style.top='70px';return;}
-  const w=document.querySelector('.wrap').getBoundingClientRect(),h=CAT.offsetHeight,want=innerHeight-w.top-4,max=innerHeight-66-h;
+  const w=document.querySelector('.wrap').getBoundingClientRect(),h=CAT.offsetHeight,max=innerHeight-66-h,
+    want=innerHeight-w.top-4+(CAT.classList.contains('named')?30:0);   /* son nom tient entre lui et le plateau */
   CAT.style.top='';CAT.style.bottom=Math.min(want,max)+'px';if(want>max)CAT.classList.add('behind');
 }
 addEventListener('resize',catPlace);
@@ -1340,7 +1366,7 @@ function h53(s){let a=0xdeadbeef,b=0x41c6ce57;
 function passKnown(){if(passOK)return true;try{return localStorage.getItem(PKEY)===PASS;}catch(e){return false;}}
 function tryEnter(s){
   wantSea=s||sea;
-  if(passKnown()){enter(wantSea);return;}
+  if(passKnown()){afterPass(wantSea);return;}
   document.body.classList.add('gate');
   const p=$('pass');p.value='';try{p.focus();}catch(e){}
 }
@@ -1579,7 +1605,7 @@ $('gate').onsubmit=e=>{
   const p=$('pass'),g=$('gate');
   if(h53('lighthouse|'+p.value.trim().toLowerCase())===PASS){
     passOK=true;try{localStorage.setItem(PKEY,PASS);}catch(e){}
-    p.blur();document.body.classList.remove('gate');S.good();enter(wantSea);
+    p.blur();document.body.classList.remove('gate');S.good();afterPass(wantSea);
   }else{
     S.nope();p.value='';g.classList.remove('bad');void g.offsetWidth;g.classList.add('bad');
   }
@@ -1598,7 +1624,29 @@ $('reset').onclick=()=>{prog=PROG[sea]={done:[],open:1};saveProg();$('panel').cl
 document.addEventListener('click',e=>{
   if(!$('panel').contains(e.target)&&e.target!==$('gear'))$('panel').classList.remove('on');});
 
-setSea(sea);goCover();
+/* ------------------------------------------------------------ le nom du chat */
+/* Demandé une fois, juste après le mot de passe, puis gardé dans le navigateur et écrit en petit
+   sous le chat. Lettres seulement, 12 au plus, la première en majuscule. Un champ vide passe aussi. */
+const NKEY='lighthouse_catname_v1';
+let catNameMem=null;                                      /* si le navigateur ne garde rien */
+function catNameGet(){try{const v=localStorage.getItem(NKEY);if(v!==null)return v;}catch(e){}return catNameMem;}
+function catNameShow(){const n=catNameGet()||'';$('catname').textContent=n;CAT.classList.toggle('named',!!n);catPlace();}
+function catNameSet(v){catNameMem=v;try{localStorage.setItem(NKEY,v);}catch(e){}catNameShow();}
+let NOTLETTER;try{NOTLETTER=new RegExp('[^\\p{L}]','gu');}catch(e){NOTLETTER=/[^A-Za-zÀ-ÖØ-öø-ÿ]/g;}
+function cleanName(v){v=Array.from(v.replace(NOTLETTER,'')).slice(0,12).join('');return v?v.charAt(0).toUpperCase()+v.slice(1):'';}
+let afterName=null;
+function askName(then){afterName=then||null;const i=$('catin');i.value=catNameGet()||'';
+  document.body.classList.add('naming');try{i.focus();}catch(e){}}
+function afterPass(s){if(catNameGet()===null)askName(()=>enter(s));else enter(s);}
+$('catin').addEventListener('input',e=>{if(e.isComposing)return;const i=e.target,c=cleanName(i.value);if(c!==i.value)i.value=c;});
+$('catin').addEventListener('compositionend',e=>{const i=e.target;i.value=cleanName(i.value);});
+$('nameform').onsubmit=e=>{
+  e.preventDefault();actx();catNameSet(cleanName($('catin').value));$('catin').blur();
+  document.body.classList.remove('naming');S.purr();const t=afterName;afterName=null;if(t)t();
+};
+$('rename').onclick=()=>{actx();$('panel').classList.remove('on');askName(null);};
+
+catNameShow();setSea(sea);goCover();
 </script>
 </body>
 </html>
