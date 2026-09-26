@@ -23,6 +23,7 @@ body[data-tone=light]{
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{
   background:#0f1a2c;color:var(--pale);
   font:16px/1.45 "Avenir Next","Segoe UI",system-ui,sans-serif;
@@ -246,10 +247,12 @@ body.dawn .wrap{background:transparent;border-color:transparent;box-shadow:none;
 #scene{position:absolute;left:0;top:0}
 .fx{position:absolute}
 .fxl{position:absolute;inset:0;width:100%;height:100%}
-.halo,.sun,.warmth,.flash,.soft,.dot,.lensglow,.alarmoff{border-radius:50%;transform:translate(-50%,-50%)}
-.halo{mix-blend-mode:screen;transition:width 1.6s ease,opacity 1.6s ease;animation:flame 2.6s ease-in-out infinite;
+.halo,.sun,.warmth,.flash,.soft,.dot,.lensglow,.alarmoff,.room{border-radius:50%;transform:translate(-50%,-50%)}
+.halo{mix-blend-mode:screen;transition:width 1.6s ease,opacity 1.6s ease;animation:flame 2.2s ease-in-out infinite;
   background:radial-gradient(circle,rgba(255,220,150,.9) 0%,rgba(255,176,80,.5) 30%,rgba(255,150,50,.14) 56%,rgba(255,140,40,0) 70%)}
-@keyframes flame{50%{filter:brightness(1.15)}}
+@keyframes flame{0%,100%{filter:brightness(1)}25%{filter:brightness(1.2)}45%{filter:brightness(.88)}70%{filter:brightness(1.12)}85%{filter:brightness(.95)}}
+.room{opacity:0;mix-blend-mode:soft-light;transition:opacity 1.8s ease;
+  background:radial-gradient(circle,rgba(255,196,110,.95) 0%,rgba(255,176,90,.55) 32%,rgba(255,160,80,.18) 58%,rgba(255,150,70,0) 74%)}
 .flash{opacity:0;mix-blend-mode:screen;
   background:radial-gradient(circle,rgba(235,230,255,.95) 0%,rgba(190,180,255,.45) 18%,rgba(150,140,240,.14) 42%,rgba(140,130,230,0) 62%)}
 .soft{opacity:0;mix-blend-mode:screen;transition:opacity 2.6s ease;
@@ -300,6 +303,43 @@ body[data-sea=calm][data-board=people]:not(.dawn) #next{margin-top:16px}
 body[data-sea=calm][data-board=people]:not(.dawn) #hint{display:none}
 @media (max-width:700px),(max-aspect-ratio:1/1){
   body[data-sea=calm][data-board=people]:not(.dawn) .wrap{margin:auto auto 2vh;max-width:520px}
+}
+
+/* téléphone : le décor en haut, le plateau en bas (à portée de pouce), plus léger et plus serré */
+@media (max-width:600px){
+  body{--wrap:rgba(15,26,44,.55)}
+  body[data-tone=light]{--wrap:rgba(255,251,244,.6)}
+  #stage{display:flex;flex-direction:column;padding:10px 8px 12px}
+  body:not(.dawn) .wrap{margin:auto 0 0}
+  .wrap{padding:16px 12px 16px;border-radius:16px;backdrop-filter:blur(2px)}
+  #say{margin-bottom:14px;font-size:16px}
+  #say small{font-size:12px}
+  .sentence{margin:4px auto 16px;font-size:clamp(18px,5.2vw,22px);line-height:1.8}
+  .opts{gap:9px}
+  .opt{padding:11px 16px}
+  #next{margin-top:18px}
+  #hint{margin-top:12px}
+  .onepic img{width:min(110px,30vw);height:min(110px,30vw)}
+  .cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px}
+  .cell{margin-bottom:8px;padding:10px;font-size:14px;overflow-wrap:anywhere}
+  .cell.withpic{gap:8px;padding:6px 8px 6px 6px}
+  .pic{width:50px;height:50px}
+  .slots{margin-bottom:12px}
+  .slot{min-height:40px;padding:8px 12px;margin:6px 0;font-size:14px}
+  .step{padding:10px 13px;font-size:14px}
+  .picks{gap:10px}
+  .pcard img{width:min(118px,27vw);height:min(118px,27vw)}
+  .what{font-size:17px;margin-bottom:12px}
+  .suspects{gap:8px}
+  .scard{padding:8px 6px 10px;font-size:13px;gap:6px}
+  .scard img{max-width:92px}
+  .clue,.why{margin-top:12px;padding:10px 12px;font-size:14.5px}
+  .shelf{top:72px;bottom:auto;left:3vw;width:94vw;height:64px}
+  .shelf .row{left:10px;right:10px;gap:8px;bottom:12px}
+  .shelf .item,.shelf .item img{width:46px;height:46px}
+  .shelf .plank{height:12px}
+  .lost{height:72px}
+  .lost span{font-size:56px}
 }
 
 /* la fin : calme, sans score */
@@ -672,6 +712,64 @@ const AMBIENT={
    on les déverrouille tous les deux au premier geste, puis on ne fait que changer leur source. */
 const AMB={master:.35,want:null,ready:false,started:false,tok:0,slots:[],cur:null,files:{}};
 const GRAPH=/^https?:$/.test(location.protocol);
+/* En ligne, l'ambiance est décodée en mémoire et bouclée à l'échantillon près par Web Audio : un
+   lecteur <audio> laisse un petit trou à chaque tour (la reprise, plus les silences que l'encodeur
+   MP3 met au début et à la fin du fichier). En fichier local (double-clic), le navigateur interdit
+   ce chargement : on garde alors le lecteur <audio>. */
+const LOOPLEN={'ambient_cover.mp3':60,'ambient_inside.mp3':60,'ambient_island.mp3':52.6507};  /* durées exactes des boucles */
+const BUF={};                                /* fichier -> {b,a,e} décodé, une promesse pendant le chargement, ou 'missing' */
+function decodeWith(c,ab){return new Promise((ok,ko)=>{try{const p=c.decodeAudioData(ab,ok,ko);if(p&&p.catch)p.catch(ko);}catch(e){ko(e);}});}
+function decodeMp3(ab){
+  let off=null;try{const O=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(O)off=new O(2,24000,24000);}catch(e){}
+  const copy=ab.slice(0);                    /* decodeAudioData vide le tampon : une copie pour le second essai */
+  return (off?decodeWith(off,ab):Promise.reject()).catch(()=>decodeWith(AC,copy));
+}
+/* début et fin exacts de la boucle : on saute le silence que l'encodeur a pu laisser en tête */
+function loopPoints(b,file){
+  const r=b.sampleRate,ch=[];for(let c=0;c<b.numberOfChannels;c++)ch.push(b.getChannelData(c));
+  const loud=i=>ch.some(x=>Math.abs(x[i])>.002);
+  let a=0;const head=Math.min(b.length,r*.3|0);while(a<head&&!loud(a))a++;if(a>=head)a=0;
+  let e=b.length;const L=LOOPLEN[file];
+  if(L&&a+L*r<=b.length+2)e=Math.min(b.length,Math.round(a+L*r));
+  else{let z=b.length-1;const tail=Math.max(a,b.length-(r*.3|0));while(z>tail&&!loud(z))z--;e=z+1;}
+  /* les fichiers portent, après la boucle, 60 ms de la suite exacte de sa fin : on s'en sert pour
+     fondre la reprise sur 10 ms, et la dernière note de la boucle enchaîne sans la moindre marche */
+  const n=Math.round(r*.01);
+  if(e+n<=b.length&&a+n<e)for(const x of ch)for(let i=0;i<n;i++){const t=(i+.5)/n;x[a+i]=x[e+i]*(1-t)+x[a+i]*t;}
+  return {a:a/r,e:e/r};
+}
+function bufGet(file){
+  if(!BUF[file])BUF[file]=fetch(SOUND_DIR+file).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(decodeMp3)
+    .then(b=>{const p=loopPoints(b,file);return BUF[file]={b:b,a:p.a,e:p.e};}).catch(()=>BUF[file]='missing');
+  return Promise.resolve(BUF[file]);
+}
+function bufStart(S,at){
+  const x=BUF[S.file],len=x.e-x.a,s=AC.createBufferSource();
+  s.buffer=x.b;s.loop=true;s.loopStart=x.a;s.loopEnd=x.e;s.connect(S.g);
+  const off=((at||0)%len+len)%len;s.start(0,x.a+off);S.src=s;S.t0=AC.currentTime-off;S.len=len;
+}
+function bufStop(S){
+  if(!S.src)return;S.pos=((AC.currentTime-S.t0)%S.len+S.len)%S.len;
+  try{S.src.stop();}catch(e){}try{S.src.disconnect();}catch(e){}S.src=null;
+}
+const playing=S=>AMB.buf?!!S.src:!S.el.paused;
+function stopSlot(S){if(AMB.buf)bufStop(S);else S.el.pause();}
+function resumeSlot(S){
+  if(AMB.buf){if(!S.src&&S.file&&BUF[S.file]&&BUF[S.file].b)bufStart(S,S.pos);}
+  else{try{const p=S.el.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+}
+/* comme ambLoad, pour la lecture en mémoire */
+function ambLoadBuf(S,file,done){
+  let fin=false;if(S.abort)S.abort();
+  if(S.file===file&&S.src){done(true);return;}           /* il joue encore (fondu de sortie) : on le rattrape tel quel */
+  S.abort=()=>{fin=true;};
+  bufGet(file).then(x=>{
+    if(fin)return;fin=true;
+    if(x==='missing'){done(false);return;}
+    const same=S.file===file;bufStop(S);clearInterval(S.timer);S.level=0;ambApply(S);
+    S.file=file;bufStart(S,same?S.pos:0);S.ok=true;done(true);
+  });
+}
 function silentWav(){
   const n=800,b=new Uint8Array(44+n*2),d=new DataView(b.buffer);
   const w=(o,t)=>{for(let i=0;i<t.length;i++)b[o+i]=t.charCodeAt(i);};
@@ -696,6 +794,12 @@ function ambFade(S,to,ms,after){
 function ambStart(){
   if(AMB.started)return;AMB.started=true;
   actx();
+  AMB.buf=GRAPH&&!!AC&&!!window.fetch;
+  if(AMB.buf){
+    AMB.slots=[0,1].map(()=>{const g=AC.createGain();g.gain.value=0;g.connect(AC.destination);
+      return {g:g,src:null,file:null,ok:false,level:0,timer:0,abort:null,pos:0};});
+    AMB.ready=true;if(AMB.want)ambient(AMB.want);return;
+  }
   AMB.slots=[0,1].map(()=>{
     const el=new Audio();el.loop=true;el.preload='auto';
     const S={el:el,file:null,ok:false,level:0,g:null,timer:0,abort:null};
@@ -735,21 +839,21 @@ function ambLoad(S,file,done){
 }
 function ambSilence(){
   const old=AMB.cur;AMB.cur=null;
-  if(old)ambFade(old,0,1000,()=>{if(AMB.cur!==old)old.el.pause();});
+  if(old)ambFade(old,0,1000,()=>{if(AMB.cur!==old)stopSlot(old);});
 }
 function ambCross(S){
   const old=AMB.cur;AMB.cur=S;
   ambFade(S,1,1000);
-  if(old&&old!==S)ambFade(old,0,1000,()=>{if(AMB.cur!==old)old.el.pause();});
+  if(old&&old!==S)ambFade(old,0,1000,()=>{if(AMB.cur!==old)stopSlot(old);});
 }
 function ambTry(cand,i,tok){
   if(tok!==AMB.tok)return;
   const file=cand[i];
   if(!file){ambSilence();return;}
   const cur=AMB.cur;
-  if(cur&&cur.file===file){if(cur.el.paused){try{cur.el.play();}catch(e){}}ambFade(cur,1,400);return;}
+  if(cur&&cur.file===file){if(!playing(cur))resumeSlot(cur);ambFade(cur,1,400);return;}
   const S=AMB.slots.find(x=>x!==cur&&x.file===file)||AMB.slots.filter(x=>x!==cur).sort((a,b)=>a.level-b.level)[0];
-  ambLoad(S,file,good=>{
+  (AMB.buf?ambLoadBuf:ambLoad)(S,file,good=>{
     if(tok!==AMB.tok)return;
     if(!good){AMB.files[file]='missing';ambTry(cand,i+1,tok);return;}
     AMB.files[file]='ok';ambCross(S);
@@ -766,7 +870,7 @@ function onGesture(){
   if(!AMB.started){ambStart();return;}
   if(!AMB.ready)return;
   const c=AMB.cur;
-  if(c&&c.el.paused){try{c.el.play();}catch(e){}}          /* un navigateur avait refusé : on réessaie */
+  if(c&&!playing(c))resumeSlot(c);                          /* un navigateur avait refusé : on réessaie */
   else if(!c&&AMB.want)ambient(AMB.want);
 }
 ['click','keydown'].forEach(ev=>document.addEventListener(ev,onGesture,{passive:true}));
@@ -908,8 +1012,12 @@ function objFor(R){
 const FXBOARD={
   /* un halo chaud autour de la lampe, qui grandit à chaque phrase corrigée */
   logbook:{
-    start(){this.n=0;this.h=fxEl('halo',148,168,180);this.h.style.opacity=.3;},
-    hit(){this.n++;this.h.style.width=(180+this.n*85)/sceneWH[0]*100+'%';this.h.style.opacity=Math.min(1,.3+this.n*.16);S.glow();}
+    start(){this.n=0;this.room=fxEl('room',160,190,1100);this.h=fxEl('halo',148,168,190);this.h.style.opacity=.45;},
+    hit(){this.n++;const n=this.n,p=toScreen(148,150);
+      this.h.style.width=(190+n*(innerWidth<600?28:60))/sceneWH[0]*100+'%';this.h.style.opacity=Math.min(.9,.45+n*.09);
+      this.h.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.45)',filter:'brightness(1.7)',offset:.25},
+        {transform:'translate(-50%,-50%) scale(1)'}],{duration:1500,easing:'ease-out'});
+      this.room.style.opacity=Math.min(innerWidth<600?.3:.42,n*(innerWidth<600?.06:.085));burst(p.x,p.y);S.glow();}
   },
   /* la pluie s'éclaircit, les éclairs s'espacent ; à la dernière, la tempête cesse */
   storm:{
