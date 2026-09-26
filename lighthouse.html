@@ -146,6 +146,8 @@ body.dawn .wrap{background:transparent;border-color:transparent;box-shadow:none;
   box-shadow:0 2px 8px var(--shadow);transition:box-shadow 1s ease}
 .pic img{display:block;width:100%;height:100%;object-fit:cover;transition:filter 1s ease}
 /* la panne : terne, et son défaut bouge ; réparée : les couleurs reviennent, le défaut s'arrête */
+.pic img.fixedimg{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.fixed .pic img.fixedimg{opacity:1}
 .broken .pic img{filter:grayscale(1) brightness(.8) contrast(.92)}
 .fixed .pic{animation:mend .7s ease}
 @keyframes mend{50%{transform:scale(1.1)}}
@@ -224,6 +226,8 @@ body.dawn .wrap{background:transparent;border-color:transparent;box-shadow:none;
 .scard.bad{animation:shake .4s;border-color:var(--bad)}
 .scard.good{animation:pop .4s;border-color:var(--go);border-width:2px}
 .scard.dim{opacity:.4;pointer-events:none}
+.scard .nm{display:none;font-size:15px;color:var(--lamp)}
+.suspects.named .nm{display:block;animation:rise .5s ease both}
 .clue{margin:16px 0 0;padding:12px 16px;border-radius:12px;border:1px solid var(--lamp);
   border-left-width:6px;background:var(--tint);font-size:clamp(15px,1.9vw,18px)}
 .clue b{display:block;color:var(--lamp);font-size:13px;letter-spacing:.06em;margin-bottom:2px}
@@ -277,19 +281,18 @@ body.allclear .bg.on{filter:sepia(.55) saturate(.7) hue-rotate(-8deg) brightness
 .warmth{opacity:0;mix-blend-mode:soft-light;transition:opacity 2.6s ease;
   background:radial-gradient(circle,rgba(255,180,90,.95) 0%,rgba(255,170,95,.55) 30%,rgba(255,160,90,.2) 55%,rgba(255,150,90,0) 72%)}
 .boat{opacity:0}
+.gull{position:absolute;left:0;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(60,50,40,.18))}
 .boat img{display:block;width:100%;height:100%;animation:rock 2.8s ease-in-out infinite}
 @keyframes rock{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) translateY(4%)}}
-.shelf{position:absolute;left:3vw;bottom:16px;width:min(46vw,460px);height:96px}
-.shelf .plank{position:absolute;left:0;right:0;bottom:0;height:17px;border-radius:4px;
-  background:linear-gradient(#b27b44,#8c5b2d 55%,#6a4221);box-shadow:0 7px 16px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,222,170,.35)}
-.shelf .row{position:absolute;left:14px;right:14px;bottom:17px;display:flex;gap:12px;align-items:flex-end}
-.shelf .item{width:68px;height:68px;flex:0 0 auto;border-radius:12px}
-.shelf .item img{width:100%;height:100%;border-radius:12px;box-shadow:0 5px 12px rgba(0,0,0,.45);animation:land .45s ease}
-.shelf .item.glow{background:radial-gradient(circle,#fff6d6 0%,#ffd98a 26%,rgba(255,196,100,.35) 48%,rgba(255,190,90,0) 70%);animation:land .45s ease}
+.shelf{position:absolute;left:3vw;bottom:12px;height:min(24vh,190px);aspect-ratio:814/382;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.shelf>img{display:block;width:100%;height:100%}
+.shelf .item{position:absolute;display:flex;align-items:flex-end;justify-content:center}
+.shelf .item img{height:100%;aspect-ratio:1;border-radius:14%;box-shadow:0 4px 10px rgba(0,0,0,.4);animation:land .45s ease}
+.shelf .item.glow{background:radial-gradient(circle at 50% 70%,#fff6d6 0%,#ffd98a 18%,rgba(255,196,100,.35) 34%,rgba(255,190,90,0) 52%);animation:land .45s ease}
 @keyframes land{0%{transform:translateY(-10px) scale(1.1)}60%{transform:translateY(2px) scale(.97)}100%{transform:none}}
 .lost{display:flex;justify-content:center;align-items:center;height:96px;margin:-6px 0 8px}
 .lost span{font-size:74px;line-height:1;filter:drop-shadow(0 0 16px rgba(255,220,140,.95));animation:bob 2.6s ease-in-out 1.2s infinite}
-.lost img{width:90px;height:90px;border-radius:14px;box-shadow:0 0 22px rgba(255,220,140,.9);animation:bob 2.6s ease-in-out 1.2s infinite}
+.lost img{height:92px;width:auto;filter:drop-shadow(0 0 14px rgba(255,220,140,.95));animation:bob 2.6s ease-in-out 1.2s infinite}
 @keyframes bob{50%{transform:translateY(-5px)}}
 
 /* l'île en mer calme : Sophia répond en regardant le paysage. Le plateau se fait petit et clair,
@@ -334,12 +337,10 @@ body[data-sea=calm][data-board=people]:not(.dawn) #hint{display:none}
   .scard{padding:8px 6px 10px;font-size:13px;gap:6px}
   .scard img{max-width:92px}
   .clue,.why{margin-top:12px;padding:10px 12px;font-size:14.5px}
-  .shelf{top:72px;bottom:auto;left:3vw;width:94vw;height:64px}
-  .shelf .row{left:10px;right:10px;gap:8px;bottom:12px}
-  .shelf .item,.shelf .item img{width:46px;height:46px}
-  .shelf .plank{height:12px}
+  .shelf{top:70px;bottom:auto;left:3vw;height:auto;width:94vw}
   .lost{height:72px}
   .lost span{font-size:56px}
+  .lost img{height:68px}
 }
 
 /* la fin : calme, sans score */
@@ -560,7 +561,7 @@ const GAME={
              ["crab","At midnight, I was fixing the radio."],
              ["puffin","At midnight, I was reading a book by the fire."]],
     clue:"The radio was broken all night. Nobody touched it.",
-    ans:"crab",
+    ans:"crab",obj:"key",
     why:"The crab wasn't fixing the radio. He was hiding the key in his toolbox — to keep it safe from the storm!"},
    {what:"The cake has disappeared at eight o'clock.",
     stories:[["gull","At eight o'clock, I was flying over the beach."],
@@ -568,7 +569,7 @@ const GAME={
              ["crab","At eight o'clock, I was cleaning my toolbox."],
              ["puffin","At eight o'clock, I was writing in my notebook."]],
     clue:"At eight o'clock, the fog was so thick that nobody could fly.",
-    ans:"gull",
+    ans:"gull",obj:"cake",
     why:"The gull wasn't flying. She was in the kitchen, eating the cake — with crumbs all over her raincoat!"},
    {what:"The map has disappeared at ten o'clock.",
     stories:[["gull","At ten o'clock, I was eating fish on the beach."],
@@ -576,7 +577,7 @@ const GAME={
              ["crab","At ten o'clock, I was looking for shells."],
              ["puffin","At ten o'clock, I was reading my book."]],
     clue:"The puffin lost his glasses at nine o'clock. He found them the next morning.",
-    ans:"puffin",
+    ans:"puffin",obj:"map",
     why:"Without his glasses, the puffin couldn't read! He took the map by mistake — he thought it was his book."}
   ]},
 
@@ -611,7 +612,81 @@ const WAVE={
   calm:'<svg class="wave" viewBox="0 0 56 24" aria-hidden="true"><path d="M4 9q6-5 12 0t12 0t12 0t12 0"/><path d="M10 17q6-5 12 0t12 0t12 0"/></svg>',
   stormy:'<svg class="wave" viewBox="0 0 64 52" aria-hidden="true"><path d="M4 45C14 45 17 28 25 18C32 9 45 6 53 13C59 18 58 28 50 29C44 30 41 24 45 20"/><path d="M30 45c5 0 7-4 12-4s7 4 12 4c3 0 4-2 6-2"/></svg>'
 };
-const CALM={};
+const CALM={
+ logbook:{items:[
+   [["The","lamp","are","very","bright."],2,["is","am"],"is"],
+   [["I","has","a","big","key."],1,["have","is"],"have"],
+   [["The","cat","is","sleep","on","the","chair."],3,["sleeping","sleeps"],"sleeping"],
+   [["There","are","two","boat","on","the","sea."],3,["boats","boat's"],"boats"],
+   [["She","can","swims","very","well."],2,["swim","swimming"],"swim"],
+   [["The","door","is","open.","Please","close","he."],6,["it.","she."],"it."],
+   [["I","like","the","lighthouse.","He","is","tall."],4,["It","She"],"It"],
+   [["Yesterday","I","go","to","the","beach."],2,["went","goes"],"went"]
+  ]},
+ storm:{prompt:"Choose the right word.",items:[
+   ["Last night, the wind ___ very strong.","was",["was","is"]],
+   ["The rain ___ all night.","fell",["fell","falls"]],
+   ["I ___ a very big wave.","saw",["saw","see"]],
+   ["Suddenly, the lights ___ out.","went",["went","go"]],
+   ["We ___ very cold.","were",["were","was"]],
+   ["The storm ___ at midnight.","started",["started","starts"]],
+   ["A little bird ___ on the window.","sat",["sat","sits"]],
+   ["I ___ a little scared.","was",["was","were"]]
+  ]},
+ tools:{items:[
+   ["This tool cuts wood.","saw"],
+   ["This tool hits nails.","hammer"],
+   ["You paint with this tool.","brush"],
+   ["This tool cuts wire.","cutters"],
+   ["This tool turns screws.","screwdriver"],
+   ["This tool measures things.","tape"],
+   ["This tool has oil in it.","oilcan"],
+   ["This tool turns bolts.","spanner"]
+  ]},
+ supplies:{prompt:"Is or are? Choose the right word.",items:[
+   ["There ___ some oil in the can.","is",["is","are"],"oil"],
+   ["There ___ five candles in the box.","are",["is","are"],"candles"],
+   ["There ___ a box of matches.","is",["is","are"],"matches"],
+   ["There ___ three tins of soup.","are",["is","are"],"tins"],
+   ["There ___ a long rope.","is",["is","are"],"rope"],
+   ["There ___ four blankets.","are",["is","are"],"blankets"],
+   ["There ___ some bread on the table.","is",["is","are"],"bread"],
+   ["There ___ a red can of fuel.","is",["is","are"],"fuel"]
+  ]},
+ orders:{rounds:[
+   ["The light has gone out.",["Find the broken bulb.","Take it out.","Put in a new bulb.","Turn on the light."]],
+   ["A storm is coming.",["Close the windows.","Tie up the boat.","Light the lamp.","Go inside the tower."]],
+   ["There is a bottle on the beach.",["Pick up the bottle.","Open it.","Take out the letter.","Put it in the logbook."]]
+  ]},
+ suspects:{rounds:[
+   {what:"The cake has gone!",obj:"cake",
+    stories:[["gull","I was flying over the sea."],["seal","I was swimming."],["crab","I was sleeping."]],
+    clue:"The crab has cake on his claws.",ans:"crab",
+    why:"The crab wasn't sleeping. He was eating the cake — very, very slowly!"},
+   {what:"The map has gone!",obj:"map",
+    stories:[["seal","I was playing in the waves."],["puffin","I was reading my book."],["gull","I was eating fish."]],
+    clue:"The puffin can't find his glasses.",ans:"puffin",
+    why:"Without his glasses, the puffin couldn't read! He took the map — he thought it was his book."},
+   {what:"The key has gone!",obj:"key",
+    stories:[["crab","I was on the beach."],["seal","I was in the sea."],["gull","I was on the roof."]],
+    clue:"The seal's blue scarf is on the roof.",ans:"seal",
+    why:"The seal wasn't in the sea. She was on the roof, looking at the stars — and she took the key to open the door!"}
+  ]},
+ people:{prompt:"Look at the picture. Choose the right word.",items:[
+   ["The boats are ___ the harbour.","in",["in","on"]],
+   ["The birds are ___ the sky.","in",["in","under"]],
+   ["The island is ___ the sea.","in",["in","on"]],
+   ["The sun is ___ the sea.","above",["above","under"]],
+   ["The small boat is ___ the big boat.","next to",["next to","in"]],
+   ["The fish are ___ the water.","under",["under","on"]],
+   ["The clouds are ___ the island.","above",["above","under"]],
+   ["The beach is ___ the cliff and the sea.","between",["between","on"]]
+  ]}
+};
+/* le nom de l'outil, écrit après la bonne réponse ; celui des animaux, en mer calme */
+const TOOLNAME={screwdriver:'A screwdriver.',spanner:'A spanner.',hammer:'A hammer.',cutters:'Wire cutters.',
+  saw:'A saw.',brush:'A paintbrush.',tape:'A tape measure.',oilcan:'An oil can.'};
+const ANIMAL={gull:'the gull',seal:'the seal',crab:'the crab',puffin:'the puffin'};
 let sea=(()=>{try{const v=localStorage.getItem(SEAKEY);return SEAS.indexOf(v)>=0?v:'calm';}catch(e){return 'calm';}})();
 const B=k=>sea==='calm'&&CALM[k]?Object.assign({},GAME[k],CALM[k]):GAME[k];
 
@@ -978,36 +1053,35 @@ function rain(){
   });
   return {set(v){want=Math.max(0,v);}};
 }
-/* des oiseaux : de petits « v » qui battent des ailes, comme ceux du tableau */
+/* des mouettes : gull_up, gull_mid, gull_down, gull_mid, en boucle, huit images par seconde */
+const GULL=['up','mid','down','mid'].map(n=>A('gull_'+n+'.png'));
 function flock(){
-  const g=fxCanvas();let birds=[],on=false;
-  function frame(t){
-    g.clearRect(0,0,innerWidth,innerHeight);
-    birds=birds.filter(b=>b.x>-120&&b.x<innerWidth+120);
-    g.strokeStyle='rgba(80,72,76,.8)';g.lineCap='round';
-    for(const b of birds){b.x+=b.v;b.y+=Math.sin(t/650+b.p)*.18;
-      const w=b.s*(.55+.5*Math.sin(t/105+b.p));g.lineWidth=Math.max(1,b.s*.24);g.beginPath();
-      g.moveTo(b.x-b.s,b.y-w*.55);g.quadraticCurveTo(b.x-b.s*.45,b.y-w,b.x,b.y);
-      g.quadraticCurveTo(b.x+b.s*.45,b.y-w,b.x+b.s,b.y-w*.55);g.stroke();}
-    if(!birds.length){on=false;return false;}
-  }
-  return {go(n,dir){const k=toScreen(0,0).k;
-    for(let i=0;i<n;i++){const p=toScreen(0,70+Math.random()*120);
-      birds.push({x:dir>0?-30-i*42-Math.random()*50:innerWidth+30+i*42+Math.random()*50,y:p.y,
-        v:dir*(1.4+Math.random()*.8)*k,s:(3.2+Math.random()*1.8)*k,p:Math.random()*6});}
-    if(!on){on=true;fxLoop(frame);}}};
+  let birds=[],iv=0;
+  GULL.forEach(u=>{const i=new Image();i.src=u;});
+  const tick=()=>{birds=birds.filter(b=>b.alive);for(const b of birds){b.f=(b.f+1)%4;b.el.src=GULL[b.f];}
+    if(!birds.length){clearInterval(iv);iv=0;}};
+  return {go(n,dir){
+    const k=toScreen(0,0).k;
+    for(let i=0;i<n;i++){
+      const e=document.createElement('img'),w=(34+Math.random()*18)*k,b={el:e,f:Math.random()*4|0,alive:true};
+      e.className='gull';e.alt='';e.src=GULL[b.f];e.style.width=w+'px';e.style.top=toScreen(0,60+Math.random()*120).y+'px';
+      fxRoot.appendChild(e);birds.push(b);
+      const x0=dir>0?-w-i*70-Math.random()*70:innerWidth+w+i*70+Math.random()*70,x1=dir>0?innerWidth+w:-2*w,
+        dur=Math.abs(x1-x0)/((80+Math.random()*40)*k)*1000,f=dir>0?1:-1,up=(8+Math.random()*10)*k;
+      e.animate([{transform:'translate('+x0+'px,0) scaleX('+f+')'},{transform:'translate('+(x0+x1)/2+'px,'+(-up)+'px) scaleX('+f+')'},
+        {transform:'translate('+x1+'px,0) scaleX('+f+')'}],{duration:dur,easing:'linear',fill:'forwards'}).onfinish=()=>{b.alive=false;e.remove();};
+    }
+    if(!iv){iv=setInterval(tick,125);fxTimers.push(iv);}}};
 }
-/* le bateau de pêche du port, détouré dans le fond de l'île : il sort de derrière la jetée et gagne le large */
-const BOAT='data:image/png;base64,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';
+/* le petit voilier (boat.png) sort du port et gagne le large */
 function boat(){
-  const e=fxEl('boat',290-20.5,366-12,41,24),im=document.createElement('img');im.src=BOAT;im.alt='';e.appendChild(im);
-  return {go(){e.animate([{transform:'translate(0,0) scale(.95)',opacity:0},{transform:'translate(25%,20%) scale(.95)',opacity:1,offset:.12},
-    {transform:'translate(520%,140%) scale(.9)',opacity:1}],{duration:9000,easing:'ease-in-out',fill:'forwards'});}};
+  const e=fxEl('boat',290-17,352-20,34,41),im=document.createElement('img');im.src=A('boat.png');im.alt='';e.appendChild(im);
+  return {go(){e.animate([{transform:'translate(0,0) scale(.95)',opacity:0},{transform:'translate(20%,12%) scale(.95)',opacity:1,offset:.12},
+    {transform:'translate(620%,95%) scale(.9)',opacity:1}],{duration:9000,easing:'ease-in-out',fill:'forwards'});}};
 }
 function objFor(R){
   const id=R.obj||(/key/i.test(R.what)?'key':/cake/i.test(R.what)?'cake':/map/i.test(R.what)?'map':'');
-  const emo={key:'🗝️',cake:'🍰',map:'🗺️'}[id]||'✨';
-  return {id:id,html:'<span>'+emo+'</span>'};
+  return {id:id,html:id?'<img alt="" src="'+A('found_'+id+'.png')+'">':'<span>✨</span>'};
 }
 const FXBOARD={
   /* un halo chaud autour de la lampe, qui grandit à chaque phrase corrigée */
@@ -1042,12 +1116,18 @@ const FXBOARD={
       im.style.visibility='hidden';}},
   /* l'objet file vers l'étagère du bas, qui se remplit */
   supplies:{
-    start(){const s=document.createElement('div');s.className='shelf';s.innerHTML='<div class="row"></div><div class="plank"></div>';
-      fxRoot.appendChild(s);this.row=s.firstChild;},
-    hit(){const im=document.querySelector('#board .onepic img'),slot=document.createElement('div');slot.className='item';this.row.appendChild(slot);
+    start(){const s=document.createElement('div');s.className='shelf';s.innerHTML='<img alt="" src="'+A('shelf_empty.png')+'">';
+      fxRoot.appendChild(s);this.s=s;this.n=0;},
+    hit(){
+      /* les six cases de shelf_empty.png (814 × 382), remplies ligne par ligne */
+      const C=[[22,30,400,118],[413,30,795,118],[22,140,400,228],[413,140,795,228],[22,258,400,335],[413,258,795,335]];
+      const c=C[this.n%6],slot=document.createElement('div');this.n++;slot.className='item';
+      Object.assign(slot.style,{left:c[0]/8.14+'%',top:(c[3]-(c[3]-c[1])*.84)/3.82+'%',width:(c[2]-c[0])/8.14+'%',height:(c[3]-c[1])*.82/3.82+'%'});
+      this.s.appendChild(slot);
+      const im=document.querySelector('#board .onepic img');
       if(im&&im.complete&&im.naturalWidth){const r=slot.getBoundingClientRect();
-        fly(im,r.left+r.width/2,r.top+r.height/2,{scale:r.width/im.getBoundingClientRect().width,arc:90,ms:950,
-          done:()=>{const c=document.createElement('img');c.src=im.src;c.alt='';slot.appendChild(c);S.thunk();}});
+        fly(im,r.left+r.width/2,r.top+r.height/2,{scale:r.height/im.getBoundingClientRect().height,arc:90,ms:950,
+          done:()=>{const c2=document.createElement('img');c2.src=im.src;c2.alt='';slot.appendChild(c2);S.thunk();}});
         im.style.visibility='hidden';}
       else{slot.classList.add('glow');S.thunk();}}
   },
@@ -1065,8 +1145,7 @@ const FXBOARD={
     const e=slot.firstChild,cr=card.getBoundingClientRect(),er=e.getBoundingClientRect();
     e.animate([{transform:'translate('+(cr.left+cr.width/2-er.left-er.width/2)+'px,'+(cr.top+cr.height/2-er.top-er.height/2)+'px) scale(.2)',opacity:0},
       {opacity:1,offset:.25},{transform:'translate(0,-16px) scale(1.15)',offset:.8},{transform:'none'}],{duration:1100,easing:'cubic-bezier(.3,.7,.3,1)'});
-    S.sparkle();
-    if(o.id){const im=new Image();im.onload=()=>{e.replaceWith(im);};im.src=A('object_'+o.id+'.jpg');}}},
+    S.sparkle();}},
   /* le paysage s'anime : des oiseaux, un bateau qui sort du port, le soleil qui monte, la lumière qui se réchauffe */
   people:{
     start(){this.n=0;this.max=T.items.length;this.warm=fxEl('warmth',388,214,2600);this.sun=fxEl('sun',388,214,130);
@@ -1282,7 +1361,8 @@ function drawMatch(t){
   let left=0;
   pairs.forEach(p=>{
     const c=el('button','cell'+(p[2]?' withpic broken f-'+p[2]:''));c.dataset.k=p[1];
-    if(p[2]){const w=el('span','pic'),im=el('img');im.decoding='async';im.src=A(t.pic+p[2]+'.jpg');im.alt='';w.appendChild(im);c.appendChild(w);}
+    if(p[2]){const w=el('span','pic'),im=el('img'),fx=el('img','fixedimg');im.decoding='async';im.src=A(t.pic+p[2]+'.jpg');im.alt='';
+      fx.decoding='async';fx.src=A('fixed_'+p[2]+'.jpg');fx.alt='';w.appendChild(im);w.appendChild(fx);c.appendChild(w);}
     c.appendChild(el('span',null,p[0]));
     c.onclick=()=>{actx();S.tap();
       document.querySelectorAll('.cell.sel').forEach(x=>x.classList.remove('sel'));
@@ -1352,7 +1432,7 @@ function drawPick(t){
     c.onclick=()=>{actx();
       if(id===ans){S.good();c.classList.add('good');fxHit(c);
         g.querySelectorAll('.pcard').forEach(x=>{if(x!==c)x.classList.add('done');});
-        setTimeout(()=>done('Yes.',idx>=t.items.length-1),650);}
+        setTimeout(()=>done(TOOLNAME[ans]||'Yes.',idx>=t.items.length-1),650);}
       else{S.nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
     };
     g.appendChild(c);
@@ -1377,10 +1457,11 @@ function drawDeduce(t){
     const c=el('button','scard');c.dataset.id=id;
     const im=el('img');im.decoding='async';im.src=A('suspect_'+id+'.jpg');im.alt='';
     c.appendChild(im);c.appendChild(el('span',null,text));
+    if(sea==='calm'&&ANIMAL[id])c.appendChild(el('b','nm',ANIMAL[id]));
     c.onclick=()=>{actx();
       if(id===R.ans){
         S.good();c.classList.add('good');
-        row.querySelectorAll('.scard').forEach(x=>{if(x!==c)x.classList.add('dim');});
+        row.querySelectorAll('.scard').forEach(x=>{if(x!==c)x.classList.add('dim');});row.classList.add('named');
         why.innerHTML='<p>'+R.why+'</p><p class="tell">Why? Tell me.</p>';why.style.display='block';fxHit(c,R);
         setTimeout(()=>done('',round>=t.rounds.length-1,true),700);
       }else{S.nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
