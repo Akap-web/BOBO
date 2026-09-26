@@ -1462,6 +1462,21 @@ function done(msg,last,keep){
     if(multi(T))round++;else idx++;
     draw();};
 }
+/* Next sous le bas de l'écran : la page descend doucement jusqu'à lui, sans faire sortir par le haut
+   la carte du coupable (ou au moins son nom, sur un petit écran) */
+function showNext(card){
+  try{
+    const st=$('stage'),n=$('next');if(!n.classList.contains('on'))return;
+    const s=st.getBoundingClientRect(),need=n.getBoundingClientRect().bottom+16-s.bottom;
+    if(need<=0)return;
+    let dy=need;
+    if(card){const nm=card.querySelector('.nm')||card,a=card.getBoundingClientRect().top-s.top-8,b=nm.getBoundingClientRect().top-s.top-8;
+      dy=need<=a?need:Math.min(need,b);}
+    if(dy<=0)return;
+    const top=st.scrollTop+dy;
+    try{st.scrollTo({top:top,behavior:'smooth'});}catch(e){st.scrollTop=top;}
+  }catch(e){}
+}
 function ending(){
   document.body.classList.add('dawn');
   $('say').innerHTML='';$('hint').textContent='';$('next').classList.remove('on');
@@ -1678,6 +1693,7 @@ function drawDeduce(t){
         row.querySelectorAll('.scard').forEach(x=>{if(x!==c)x.classList.add('dim');});row.classList.add('named');
         why.innerHTML='<p>'+R.why+'</p><p class="tell">Why? Tell me.</p>';why.style.display='block';fxHit(c,R);
         setTimeout(()=>done('',round>=t.rounds.length-1,true),700);
+        const me=drawId;setTimeout(()=>{if(drawId===me)showNext(c);},1300);
       }else{nope();c.classList.add('bad');setTimeout(()=>c.classList.remove('bad'),400);}
     };
     row.appendChild(c);
