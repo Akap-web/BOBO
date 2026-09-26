@@ -551,10 +551,10 @@ const GAME={
    ["I was climbing the stairs when I ___ a strange noise.","heard",["heard","was hearing","hear"]],
    ["She ___ in the logbook when all the lights went out.","was writing",["was writing","wrote","writes"]],
    ["While the wind ___, we closed every window in the tower.","was blowing",["was blowing","blew","blows"]],
-   ["The radio ___ three times during the night.","rang",["rang","was ringing","rings"]],
+   ["The radio ___ three times last night.","rang",["rang","was ringing","rings"]],
    ["They were watching the sea when a small boat ___.","appeared",["appeared","was appearing","appears"]],
    ["He ___ supper when the alarm bell rang.","was cooking",["was cooking","cooked","cooks"]],
-   ["What ___ you doing at midnight?","were",["were","did","was"]],
+   ["What ___ you doing at midnight last night?","were",["were","did","was"]],
    ["The bell ___ while we were sleeping.","rang",["rang","was ringing","ring"]],
    ["I dropped the lamp while I ___ down the ladder.","was coming",["was coming","came","come"]],
    ["When the storm ___, everybody ran inside.","started",["started","was starting","starts"]]
@@ -682,10 +682,10 @@ const CALM={
    ["Last night, the rain ___ for hours.","fell",["fell","falls"]],
    ["An hour ago, I ___ a very big wave.","saw",["saw","see"]],
    ["Last night, the lights suddenly ___ out.","went",["went","go"]],
-   ["We ___ very cold.","were",["were","was"]],
+   ["Yesterday, we ___ very cold.","were",["were","was"]],
    ["The storm ___ at midnight last night.","started",["started","starts"]],
    ["Yesterday, a little bird ___ on the window.","sat",["sat","sits"]],
-   ["I ___ a little scared.","was",["was","were"]]
+   ["When the lights went out, I ___ a little scared.","was",["was","were"]]
   ]},
  tools:{items:[
    ["This tool cuts wood.","saw"],
@@ -1520,7 +1520,10 @@ function drawGap(t){
   if(pic&&t.pic){const o=el('div','onepic');const im=el('img');im.decoding='async';im.src=A(t.pic+pic+'.jpg');im.alt='';o.appendChild(im);b.appendChild(o);}
   const s=el('div','sentence');
   sen.split(' ').forEach(tok=>{
-    if(tok.indexOf('___')>=0){const g=el('span','tok gap','?');g.id='slot';s.appendChild(g);
+    if(tok.indexOf('___')>=0){                                   /* la ponctuation collée au trou reste en place */
+      const part=tok.split('___'),g=el('span','tok gap','?');g.id='slot';
+      if(part[0])s.appendChild(document.createTextNode(part[0]));
+      s.appendChild(g);if(part[1])s.appendChild(document.createTextNode(part[1]));
       s.appendChild(document.createTextNode(' '));}
     else{s.appendChild(el('span','tok',tok));s.appendChild(document.createTextNode(' '));}
   });
