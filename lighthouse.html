@@ -387,6 +387,27 @@ body[data-sea=calm][data-board=people]:not(.dawn) #hint{display:none}
   .lost img{height:68px}
 }
 
+/* The Logbook : l'heure devant la phrase, et la page de son journal */
+.sentence .hour{font-size:.55em;color:var(--lamp);letter-spacing:.06em;margin-right:.7em;vertical-align:.3em;font-weight:600;white-space:nowrap}
+#journal{display:none;position:relative;z-index:1;max-width:560px;margin:16px auto 0;padding:12px 20px 14px;border-radius:6px;
+  background-color:#fbf3dc;color:#3a2e1c;box-shadow:0 10px 28px rgba(0,0,0,.45);
+  background-image:linear-gradient(rgba(156,90,10,.16) 1px,transparent 1px);background-size:100% 30px;background-position:0 11px;
+  font-family:"Bradley Hand","Chalkboard SE","Segoe Print","Comic Sans MS",cursive}
+body[data-board=logbook]:not(.dawn) #journal{display:block}
+#journal .jl{display:flex;align-items:baseline;min-height:30px;line-height:30px;font-size:18px}
+#journal .t{flex:0 0 auto;width:78px;font-size:13px;color:rgba(156,90,10,.4);letter-spacing:.03em;
+  font-family:"Avenir Next","Segoe UI",system-ui,sans-serif}
+#journal .jl.on .t{color:#9c5a0a;font-weight:600}
+#journal .w{opacity:0;transition:opacity 1s ease}
+#journal .jl.on .w{opacity:1}
+@media (min-width:1000px){#journal{margin:16px 4vw 0 auto}}
+@media (max-width:600px){
+  #journal{order:-1;margin:auto 0 8px 64px;padding:6px 12px 8px;max-width:none;background-size:100% 24px;background-position:0 7px}
+  #journal .jl{min-height:24px;line-height:24px;font-size:14px}
+  #journal .t{width:58px;font-size:11px}
+  body[data-board=logbook]:not(.dawn) .wrap{margin-top:0}
+}
+
 /* la fin : calme, sans score */
 .ending{text-align:center;padding:34px 8px 10px}
 .ending p{margin:.12em 0;font-size:48px;font-size:clamp(26px,4.4vw,48px);font-weight:600;color:var(--pale);
@@ -494,7 +515,7 @@ body.gate #gate.bad{animation:shake .4s}
   <div id="board"></div>
   <div id="hint"></div>
   <button id="next">Next</button>
-</div></div>
+</div><div id="journal"></div></div>
 
 <script>
 const ASSET_DIR='lighthouse_assets/', SOUND_DIR='lighthouse_assets/Sounds/';
@@ -522,19 +543,7 @@ const ALLTOOLS=['screwdriver','spanner','hammer','cutters','saw','brush','tape',
 const GAME={
 
  logbook:{ title:"The Logbook", kind:"fix", bg:"logbook", amb:"logbook",
-  prompt:"One word in the entry is wrong. Click it.",
-  items:[
-   [["If","the","wind","will get","stronger,","I","will","close","the","windows."],3,["gets","got","getting"],"gets"],
-   [["We","have","too","much","lamps","in","the","cupboard."],3,["many","few","little"],"many"],
-   [["He","don't","check","the","light","every","night."],1,["doesn't","isn't","hasn't"],"doesn't"],
-   [["Can","you","bring","a few","oil","for","the","lamp?"],3,["a little","many","much"],"a little"],
-   [["I","don't","have","many","time","before","the","storm."],3,["much","few","a few"],"much"],
-   [["If","she","stir","the","paint,","it","will","not","dry."],2,["stirs","stirred","stirring"],"stirs"],
-   [["There","were","less","boxes","than","yesterday."],2,["fewer","little","much"],"fewer"],
-   [["The","keeper","have","found","a","strange","key."],2,["has","is","was"],"has"],
-   [["If","it","rains,","we","closed","the","big","door."],4,["will close","closing","closes"],"will close"],
-   [["She","didn't","went","up","the","stairs","last","night."],2,["go","gone","going"],"go"]
-  ]},
+  prompt:"One word in the entry is wrong. Click it."},                /* ses entrées : le vivier LOGPOOL, plus bas */
 
  storm:{ title:"The Storm", kind:"gap", bg:"storm", amb:"storm",
   prompt:"Long action or short action? Choose the right form.",
@@ -668,16 +677,6 @@ const WAVE={
   stormy:'<svg class="wave" viewBox="0 0 64 52" aria-hidden="true"><path d="M4 45C14 45 17 28 25 18C32 9 45 6 53 13C59 18 58 28 50 29C44 30 41 24 45 20"/><path d="M30 45c5 0 7-4 12-4s7 4 12 4c3 0 4-2 6-2"/></svg>'
 };
 const CALM={
- logbook:{items:[
-   [["The","lamp","are","very","bright."],2,["is","am"],"is"],
-   [["I","has","a","big","key."],1,["have","is"],"have"],
-   [["The","cat","is","sleep","on","the","chair."],3,["sleeping","sleeps"],"sleeping"],
-   [["There","are","two","boat","on","the","sea."],3,["boats","boat's"],"boats"],
-   [["She","can","swims","very","well."],2,["swim","swimming"],"swim"],
-   [["The","door","is","open.","Please","close","he."],6,["it.","she."],"it."],
-   [["I","like","the","lighthouse.","He","is","tall."],4,["It","She"],"It"],
-   [["Yesterday","I","go","to","the","beach."],2,["went","goes"],"went"]
-  ]},
  storm:{prompt:"Choose the right word.",items:[
    ["Last night, the wind ___ very strong.","was",["was","is"]],
    ["The rain ___ all night.","fell",["fell","falls"]],
@@ -745,11 +744,35 @@ const ANIMAL={gull:'the gull',seal:'the seal',crab:'the crab',puffin:'the puffin
 let sea=(()=>{try{const v=localStorage.getItem(SEAKEY);return SEAS.indexOf(v)>=0?v:'calm';}catch(e){return 'calm';}})();
 const B=k=>sea==='calm'&&CALM[k]?Object.assign({},GAME[k],CALM[k]):GAME[k];
 
+/* The Logbook puise dans son vivier (lighthouse_assets/logbook_pool.json, intégré ici : la tablette de
+   Sophia bloque les fichiers séparés). Une partie = une entrée par heure, de 7 pm à 11 pm, dans l'ordre.
+   Pour chaque mer et chaque heure, un sac mélangé gardé dans le navigateur : une entrée ne revient qu'une
+   fois les six de son heure tirées, et jamais deux fois de suite quand le sac se remplit. Sans stockage :
+   tirage au hasard, sans erreur. */
+const LOGPOOL={"calm":{"7:00 pm":[{"tokens":["The","sea","are","calm","tonight."],"wrong":2,"options":["is","am"],"answer":"is"},{"tokens":["The","sun","go","down","behind","the","island."],"wrong":2,"options":["goes","going"],"answer":"goes"},{"tokens":["I","can","sees","the","gull","on","the","roof."],"wrong":2,"options":["see","seeing"],"answer":"see"},{"tokens":["The","cat","is","sleep","by","the","fire."],"wrong":3,"options":["sleeping","sleeps"],"answer":"sleeping"},{"tokens":["There","are","two","boat","in","the","harbour."],"wrong":3,"options":["boats","boat's"],"answer":"boats"},{"tokens":["I","like","the","lamp.","He","is","very","bright."],"wrong":4,"options":["It","She"],"answer":"It"}],"8:00 pm":[{"tokens":["Big","clouds","is","in","the","sky."],"wrong":2,"options":["are","am"],"answer":"are"},{"tokens":["The","seal","have","a","blue","scarf."],"wrong":2,"options":["has","is"],"answer":"has"},{"tokens":["The","wind","are","getting","stronger."],"wrong":2,"options":["is","am"],"answer":"is"},{"tokens":["The","puffin","is","read","his","book."],"wrong":3,"options":["reading","reads"],"answer":"reading"},{"tokens":["The","gull","is","wear","a","yellow","coat."],"wrong":3,"options":["wearing","wears"],"answer":"wearing"},{"tokens":["There","is","three","candles","on","the","table."],"wrong":1,"options":["are","am"],"answer":"are"}],"9:00 pm":[{"tokens":["It","is","rain","now."],"wrong":2,"options":["raining","rains"],"answer":"raining"},{"tokens":["The","windows","is","open."],"wrong":2,"options":["are","am"],"answer":"are"},{"tokens":["The","cat","are","hungry."],"wrong":2,"options":["is","am"],"answer":"is"},{"tokens":["The","seal","swim","to","the","rocks."],"wrong":2,"options":["swims","swimming"],"answer":"swims"},{"tokens":["I","have","a","old","map."],"wrong":2,"options":["an","two"],"answer":"an"},{"tokens":["The","puffin","can't","find","his","glasses.","They","is","on","the","chair."],"wrong":7,"options":["are","am"],"answer":"are"}],"10:00 pm":[{"tokens":["The","wind","is","very","loud.","I","can","hears","it."],"wrong":7,"options":["hear","hearing"],"answer":"hear"},{"tokens":["There","is","big","waves","on","the","sea."],"wrong":1,"options":["are","am"],"answer":"are"},{"tokens":["I","put","the","key","in","a","box.","The","box","are","small."],"wrong":9,"options":["is","am"],"answer":"is"},{"tokens":["The","gull","is","fly","over","the","lighthouse."],"wrong":3,"options":["flying","flies"],"answer":"flying"},{"tokens":["The","lights","goes","on","and","off."],"wrong":2,"options":["go","going"],"answer":"go"},{"tokens":["The","cat","hide","under","the","table."],"wrong":2,"options":["hides","hiding"],"answer":"hides"}],"11:00 pm":[{"tokens":["The","storm","are","coming."],"wrong":2,"options":["is","am"],"answer":"is"},{"tokens":["An","hour","ago,","I","go","up","to","the","lamp."],"wrong":4,"options":["went","goes"],"answer":"went"},{"tokens":["I","see","two","ship","on","the","sea."],"wrong":3,"options":["ships","ship's"],"answer":"ships"},{"tokens":["The","crab","and","the","seal","is","inside","now."],"wrong":5,"options":["are","am"],"answer":"are"},{"tokens":["I","closes","all","the","windows."],"wrong":1,"options":["close","closing"],"answer":"close"},{"tokens":["The","lamp","is","on.","The","boats","is","safe."],"wrong":6,"options":["are","am"],"answer":"are"}]},"stormy":{"7:00 pm":[{"tokens":["I","has","lit","the","big","lamp."],"wrong":1,"options":["have","did","does"],"answer":"have"},{"tokens":["There","isn't","many","wind","tonight."],"wrong":2,"options":["much","lots","few"],"answer":"much"},{"tokens":["The","gull","fly","over","the","rocks","every","evening."],"wrong":2,"options":["flies","flying","flown"],"answer":"flies"},{"tokens":["The","puffin","doesn't","wears","his","glasses","at","night."],"wrong":3,"options":["wear","wearing","wore"],"answer":"wear"},{"tokens":["I","put","a few","oil","in","the","lamp."],"wrong":2,"options":["a little","many","few"],"answer":"a little"},{"tokens":["The","seal","is","big","than","the","crab."],"wrong":3,"options":["bigger","biggest","very"],"answer":"bigger"}],"8:00 pm":[{"tokens":["There","are","too","much","clouds","in","the","sky."],"wrong":3,"options":["many","little","lot"],"answer":"many"},{"tokens":["The","seal","don't","want","to","leave","the","rocks."],"wrong":2,"options":["doesn't","isn't","aren't"],"answer":"doesn't"},{"tokens":["If","the","clouds","will come","closer,","I","will","close","the","windows."],"wrong":3,"options":["come","came","coming"],"answer":"come"},{"tokens":["The","crab","has","carry","his","toolbox","up","the","stairs."],"wrong":3,"options":["carried","carries","carrying"],"answer":"carried"},{"tokens":["How","many","sugar","is","there","for","the","tea?"],"wrong":1,"options":["much","few","lot"],"answer":"much"},{"tokens":["The","cat","was","sleep","when","the","wind","started."],"wrong":3,"options":["sleeping","slept","sleeps"],"answer":"sleeping"}],"9:00 pm":[{"tokens":["It","started","to","rain","while","I","were","reading."],"wrong":6,"options":["was","am","is"],"answer":"was"},{"tokens":["I","didn't","saw","the","moon","tonight."],"wrong":2,"options":["see","seen","seeing"],"answer":"see"},{"tokens":["The","wind","is","strongest","now","than","at","seven","o'clock."],"wrong":3,"options":["stronger","strong","most"],"answer":"stronger"},{"tokens":["There","are","a","few","boats,","but","there","aren't","much","birds."],"wrong":8,"options":["many","little","a little"],"answer":"many"},{"tokens":["The","puffin","have","lost","his","glasses","again."],"wrong":2,"options":["has","is","was"],"answer":"has"},{"tokens":["If","it","rains,","the","path","will","being","wet."],"wrong":6,"options":["be","been","is"],"answer":"be"}],"10:00 pm":[{"tokens":["The","waves","are","higher","that","the","boats."],"wrong":4,"options":["than","then","as"],"answer":"than"},{"tokens":["The","thunder","start","when","the","gull","was","flying","home."],"wrong":2,"options":["started","starts","starting"],"answer":"started"},{"tokens":["I","don't","have","many","time","before","the","storm."],"wrong":3,"options":["much","few","lot"],"answer":"much"},{"tokens":["The","seal","doesn't","likes","the","thunder."],"wrong":3,"options":["like","liked","liking"],"answer":"like"},{"tokens":["If","the","lights","go","out,","I","lit","the","candles."],"wrong":6,"options":["will light","lighting","lights"],"answer":"will light"},{"tokens":["I","have","putted","the","brass","key","in","a","safe","place."],"wrong":2,"options":["put","puts","putting"],"answer":"put"}],"11:00 pm":[{"tokens":["The","storm","are","coming","very","quickly."],"wrong":2,"options":["is","am","be"],"answer":"is"},{"tokens":["Everybody","are","inside","the","tower","now."],"wrong":1,"options":["is","am","be"],"answer":"is"},{"tokens":["The","crab","was","hiding","his","toolbox","when","I","see","him."],"wrong":8,"options":["saw","seen","seeing"],"answer":"saw"},{"tokens":["We","have","a little","candles,","but","they","are","small."],"wrong":2,"options":["a few","much","little"],"answer":"a few"},{"tokens":["The","cake","is","on","the","kitchen","table.","Nobody","have","eaten","it."],"wrong":8,"options":["has","is","are"],"answer":"has"},{"tokens":["If","the","storm","stop","soon,","I","will","write","it","in","the","logbook."],"wrong":3,"options":["stops","stopped","stopping"],"answer":"stops"}]}};
+const HOURS=['7:00 pm','8:00 pm','9:00 pm','10:00 pm','11:00 pm'],BAGKEY='lighthouse_logbags_v1';
+function bagDraw(s,h){
+  const list=LOGPOOL[s][h],n=list.length;let all=null;
+  try{all=JSON.parse(localStorage.getItem(BAGKEY)||'null');}catch(e){return list[Math.random()*n|0];}
+  if(!all||typeof all!=='object')all={};
+  let b=all[s+'|'+h];
+  if(!b||!Array.isArray(b.left)||b.left.some(i=>typeof i!=='number'||i<0||i>=n))b={left:[],last:-1};
+  if(!b.left.length){
+    b.left=shuffle(list.map((_,i)=>i));
+    if(b.left[0]===b.last&&n>1){const j=1+(Math.random()*(n-1)|0),x=b.left[0];b.left[0]=b.left[j];b.left[j]=x;}
+  }
+  const i=b.left.shift();b.last=i;all[s+'|'+h]=b;
+  try{localStorage.setItem(BAGKEY,JSON.stringify(all));}catch(e){}
+  return list[i];
+}
+const logbookGame=s=>HOURS.map(h=>{const e=bagDraw(s,h);return [e.tokens,e.wrong,e.options,e.answer,h];});
+
 /* cinq exercices par partie, tirés au hasard ; une seule manche là où il y en a plusieurs */
 const PER=5;
 let T=null;                                            /* le tableau en cours, avec son tirage */
 function deal(k){
   const t=Object.assign({},B(k));
+  if(k==='logbook'){t.items=logbookGame(sea);return t;}
   if(t.rounds)t.rounds=[t.rounds[Math.random()*t.rounds.length|0]];
   else t.items=shuffle(t.items).slice(0,PER);
   return t;
@@ -1373,7 +1396,7 @@ function beacon(){
 }
 function go(k){
   if(!isOpen(k))return;
-  cur=k;idx=0;round=0;sel=null;T=deal(k);
+  cur=k;idx=0;round=0;sel=null;T=deal(k);if(k==='logbook')journalReset();
   document.body.dataset.screen='board';document.body.dataset.board=k;document.body.classList.remove('dawn');
   setBg(BG[T.bg]);ambient(T.amb);layer(k);
   draw();fxStart(k);
@@ -1436,6 +1459,15 @@ function ending(){
   e.appendChild(again);b.appendChild(e);
   tabs();S.chime();catRest='sleepy';catPlace();
 }
+/* sa page de journal de bord : les cinq heures à l'encre pâle, chaque phrase corrigée vient remplir la sienne */
+function journalReset(){
+  const j=$('journal');j.innerHTML='';
+  HOURS.forEach(h=>{const r=el('div','jl');r.setAttribute('data-h',h);r.appendChild(el('span','t',h));r.appendChild(el('span','w',''));j.appendChild(r);});
+}
+function journalWrite(h,text){
+  const rows=document.querySelectorAll('#journal .jl');
+  for(let i=0;i<rows.length;i++)if(rows[i].getAttribute('data-h')===h){rows[i].lastChild.textContent=text;rows[i].className='jl on';}
+}
 function draw(){
   drawId++;
   tabs();sel=null;$('next').classList.remove('on');$('hint').textContent='';
@@ -1447,10 +1479,11 @@ function draw(){
 /* ------------------------------------------------------- corriger */
 function drawFix(t){
   if(idx>=t.items.length)idx=0;
-  const [toks,badI,opts,ans]=t.items[idx];
+  const [toks,badI,opts,ans,hour]=t.items[idx];
   $('say').innerHTML=t.prompt;
   const b=$('board');b.innerHTML='';
   const s=el('div','sentence');s.id='sen';
+  if(hour)s.appendChild(el('span','hour',hour));                  /* comme une ligne de journal de bord */
   toks.forEach((tok,i)=>{
     const e=el('span','tok click',tok);
     e.onclick=()=>{actx();
@@ -1468,6 +1501,7 @@ function drawFix(t){
       const x=el('button','opt',op);
       x.onclick=()=>{actx();
         if(op===ans){S.good();const g=$('slot');g.textContent=op;g.className='tok fixed';fxHit();
+          if(hour)journalWrite(hour,toks.map((w,i)=>i===badI?ans:w).join(' '));
           x.classList.add('good');setTimeout(()=>done('Corrected.',idx>=t.items.length-1),650);}
         else{nope();x.classList.add('bad');setTimeout(()=>x.classList.remove('bad'),400);}
       };
