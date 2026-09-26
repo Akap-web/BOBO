@@ -807,7 +807,8 @@ const GRAPH=/^https?:$/.test(location.protocol);
    lecteur <audio> laisse un petit trou à chaque tour (la reprise, plus les silences que l'encodeur
    MP3 met au début et à la fin du fichier). En fichier local (double-clic), le navigateur interdit
    ce chargement : on garde alors le lecteur <audio>. */
-const LOOPLEN={'ambient_cover.mp3':60,'ambient_inside.mp3':60,'ambient_island.mp3':52.6507};  /* durées exactes des boucles */
+const LOOPLEN={'ambient_cover.mp3':60,'ambient_inside.mp3':60,'ambient_island.mp3':52.6507,   /* durées exactes des boucles */
+  'layer_logbook.mp3':30,'layer_storm.mp3':60,'layer_machine.mp3':12.8761,'layer_tools.mp3':40,'layer_emergency.mp3':27};
 const BUF={};                                /* fichier -> {b,a,e} décodé, une promesse pendant le chargement, ou 'missing' */
 function decodeWith(c,ab){return new Promise((ok,ko)=>{try{const p=c.decodeAudioData(ab,ok,ko);if(p&&p.catch)p.catch(ko);}catch(e){ko(e);}});}
 function decodeMp3(ab){
@@ -815,16 +816,23 @@ function decodeMp3(ab){
   const copy=ab.slice(0);                    /* decodeAudioData vide le tampon : une copie pour le second essai */
   return (off?decodeWith(off,ab):Promise.reject()).catch(()=>decodeWith(AC,copy));
 }
-/* début et fin exacts de la boucle : on saute le silence que l'encodeur a pu laisser en tête */
+/* début et fin exacts de la boucle. Les fichiers portent, juste après la boucle, une copie de son
+   propre début : le vrai départ est l'endroit où le début et cette copie se superposent (les
+   navigateurs ne retirent pas tous le silence que l'encodeur met en tête). Faute de copie, on saute
+   simplement ce silence. */
 function loopPoints(b,file){
   const r=b.sampleRate,ch=[];for(let c=0;c<b.numberOfChannels;c++)ch.push(b.getChannelData(c));
-  const loud=i=>ch.some(x=>Math.abs(x[i])>.002);
-  let a=0;const head=Math.min(b.length,r*.3|0);while(a<head&&!loud(a))a++;if(a>=head)a=0;
-  let e=b.length;const L=LOOPLEN[file];
-  if(L&&a+L*r<=b.length+2)e=Math.min(b.length,Math.round(a+L*r));
-  else{let z=b.length-1;const tail=Math.max(a,b.length-(r*.3|0));while(z>tail&&!loud(z))z--;e=z+1;}
-  /* les fichiers portent, après la boucle, 60 ms de la suite exacte de sa fin : on s'en sert pour
-     fondre la reprise sur 10 ms, et la dernière note de la boucle enchaîne sans la moindre marche */
+  const loud=i=>ch.some(x=>Math.abs(x[i])>.002),L=LOOPLEN[file],x0=ch[0];
+  let a=-1,e=b.length;
+  if(L){const N=Math.round(L*r),m=Math.round(r*.02),top=Math.min(3000,b.length-N-m);let best=-1;
+    for(let k=0;k<=top;k++){let s=0,u2=0,v2=0;
+      for(let i=0;i<m;i+=2){const u=x0[k+i],v=x0[k+N+i];s+=u*v;u2+=u*u;v2+=v*v;}
+      const c=s/Math.sqrt(u2*v2+1e-12);if(c>best){best=c;a=k;}}
+    if(best<.6)a=-1;else e=a+N;}
+  if(a<0){a=0;const head=Math.min(b.length,r*.3|0);while(a<head&&!loud(a))a++;if(a>=head)a=0;
+    if(L&&a+L*r<=b.length+2)e=Math.min(b.length,Math.round(a+L*r));
+    else{let z=b.length-1;const tail=Math.max(a,b.length-(r*.3|0));while(z>tail&&!loud(z))z--;e=z+1;}}
+  /* la copie qui suit la boucle sert à fondre la reprise sur 10 ms : la fin enchaîne sans marche */
   const n=Math.round(r*.01);
   if(e+n<=b.length&&a+n<e)for(const x of ch)for(let i=0;i<n;i++){const t=(i+.5)/n;x[a+i]=x[e+i]*(1-t)+x[a+i]*t;}
   return {a:a/r,e:e/r};
@@ -889,7 +897,7 @@ function ambStart(){
   if(AMB.buf){
     AMB.slots=[0,1].map(()=>{const g=AC.createGain();g.gain.value=0;g.connect(AC.destination);
       return {g:g,src:null,file:null,ok:false,level:0,timer:0,abort:null,pos:0};});
-    AMB.ready=true;if(AMB.want)ambient(AMB.want);return;
+    AMB.ready=true;if(AMB.want)ambient(AMB.want);if(LAY.want)layer(LAY.want);return;
   }
   AMB.slots=[0,1].map(()=>{
     const el=new Audio();el.loop=true;el.preload='auto';
@@ -956,6 +964,37 @@ function ambient(board){
   const tok=++AMB.tok;
   ambTry((AMBIENT[board]||[]).filter(f=>AMB.files[f]!=='missing'),0,tok);
 }
+/* ------------------------------------------------------------ la couleur de chaque pièce */
+/* Sous la tempête étouffée qui court dans tout le phare, chaque pièce ajoute sa couche : le feu du
+   journal, le tonnerre, le ronron des machines, l'atelier, le vent en haut de la tour. En ligne
+   seulement (lecture en mémoire) ; un fichier absent ne donne rien. */
+const LAYER={logbook:'layer_logbook.mp3',storm:'layer_storm.mp3',machine:'layer_machine.mp3',
+  tools:'layer_tools.mp3',orders:'layer_emergency.mp3'};
+const LAY={want:null,cur:null,tok:0,gain:1};
+const layLevel=()=>Math.max(0,Math.min(1,AMB.master*LAY.gain));
+function layRamp(v,to,sec,stop){
+  const t=AC.currentTime,g=v.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(to,t+sec);
+  if(stop)setTimeout(()=>{try{v.s.stop();}catch(e){}try{v.s.disconnect();v.g.disconnect();}catch(e){}
+    if(LAYER[LAY.want]!==v.file)delete BUF[v.file];},sec*1000+120);   /* la mémoire ne garde que la couche en cours */
+}
+function layer(board){
+  LAY.want=board;
+  if(!AMB.ready||!AMB.buf)return;
+  const tok=++LAY.tok,file=board?LAYER[board]:null;LAY.gain=1;
+  if(LAY.cur&&LAY.cur.file===file){layRamp(LAY.cur,layLevel(),1.2);return;}
+  if(LAY.cur){layRamp(LAY.cur,0,1.2,true);LAY.cur=null;}
+  if(!file)return;
+  bufGet(file).then(x=>{
+    if(tok!==LAY.tok||x==='missing')return;
+    const g=AC.createGain(),src=AC.createBufferSource();g.gain.value=0;g.connect(AC.destination);
+    src.buffer=x.b;src.loop=true;src.loopStart=x.a;src.loopEnd=x.e;src.connect(g);src.start(0,x.a);
+    LAY.cur={file:file,g:g,s:src};layRamp(LAY.cur,layLevel(),1.6);
+  });
+}
+/* plus fort ou plus doux, sans changer de pièce (le tonnerre qui s'éloigne) */
+function layerTo(v,sec){LAY.gain=v;if(LAY.cur)layRamp(LAY.cur,layLevel(),sec||1.2);}
+const layerIs=board=>!!(LAY.cur&&LAY.cur.file===LAYER[board]);
+
 function onGesture(){
   actx();
   if(!AMB.started){ambStart();return;}
@@ -1115,10 +1154,11 @@ const FXBOARD={
     strike(ms){this.t=fxLater(()=>{
       if(this.n>=this.max)return;
       this.fl.animate([{opacity:0},{opacity:.9,offset:.07},{opacity:.12,offset:.2},{opacity:.7,offset:.32},{opacity:0}],{duration:700,easing:'ease-out'});
-      fxLater(()=>S.thunder(),280+Math.random()*500);
+      if(!layerIs('storm'))fxLater(()=>S.thunder(),280+Math.random()*500);
       this.strike((3000+this.n*2800)*(.75+Math.random()*.5));},ms);},
     hit(){this.n++;const left=1-this.n/this.max;this.rain.set(left);
-      if(left<=0){clearTimeout(this.t);document.body.classList.add('stormover');S.hush();return true;}else S.lull();}
+      if(left<=0){clearTimeout(this.t);document.body.classList.add('stormover');S.hush();layerTo(0,3.5);return true;}
+      layerTo(Math.max(.3,left),1.5);S.lull();}
   },
   /* la carte réparée reprend ses couleurs (le défaut, lui, est animé en CSS) */
   machine:{hit(cell){cell.classList.remove('broken');cell.classList.add('fixed');S.repair();return true;}},
@@ -1268,14 +1308,14 @@ function go(k){
   if(!isOpen(k))return;
   cur=k;idx=0;round=0;sel=null;T=deal(k);
   document.body.dataset.screen='board';document.body.dataset.board=k;document.body.classList.remove('dawn');
-  setBg(BG[T.bg]);ambient(T.amb);
+  setBg(BG[T.bg]);ambient(T.amb);layer(k);
   draw();fxStart(k);
   catRest='thinking';catSay([['hello',1000]]);catPlace();
 }
 function goCover(){
   cur=null;sel=null;T=null;drawId++;fxStart(null);
   document.body.dataset.screen='cover';document.body.dataset.board='cover';document.body.classList.remove('dawn','gate');
-  setBg(BG.cover);ambient('cover');tabs();
+  setBg(BG.cover);ambient('cover');layer(null);tabs();
   catRest='hello';catSay([]);catPlace();
 }
 function setSea(s){
@@ -1525,7 +1565,7 @@ function drawDeduce(t){
 /* ------------------------------------------------------------ events */
 $('gear').onclick=e=>{e.stopPropagation();$('panel').classList.toggle('on');};
 $('vol').oninput=e=>{vol=e.target.value/100;if(GAIN)GAIN.gain.value=vol;};
-$('vamb').oninput=e=>{AMB.master=e.target.value/100;AMB.slots.forEach(ambApply);};
+$('vamb').oninput=e=>{AMB.master=e.target.value/100;AMB.slots.forEach(ambApply);if(LAY.cur)layRamp(LAY.cur,layLevel(),.05);};
 document.querySelectorAll('.sea').forEach(b=>{
   b.insertAdjacentHTML('afterbegin',WAVE[b.dataset.sea]);
   b.onclick=()=>{actx();tryEnter(b.dataset.sea);};
