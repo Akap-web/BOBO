@@ -191,6 +191,7 @@ body.nosubs #sub{padding:6px}
 #helpCard .way{font-size:34px;line-height:1.2;margin:6px 0;padding:6px 10px;border-radius:12px;background:#f3e3c0}
 #helpCard .or{font-size:15px;color:#8a7660;font-style:italic}
 @media (max-height:520px){#helpBtn{width:44px;height:44px;left:8px;bottom:8px}#helpCard .way{font-size:24px;margin:3px 0}}
+@media (max-height:340px){body{overflow:auto}#rules{padding:44px 12px 12px}#rules h1{font-size:24px}#rules .lead{font-size:13px;margin:0 0 6px}#rules li{font-size:13px;padding:4px 8px;margin-bottom:4px}#rules li .n{margin-right:8px}#rules .bell{width:52px;height:52px}#rules .bell svg{width:30px;height:30px}}
 </style>
 </head>
 <body>
@@ -204,8 +205,8 @@ body.nosubs #sub{padding:6px}
 <a href="index.html" style="display:inline-block;margin-top:6px;font-size:17px;color:inherit;opacity:.75">&larr; All the games</a>
 </div></div>
 <style>
-#lk{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at 50% 100%,#f6e2b6 0%,#e9c98b 55%,#c79a5c 100%);color:#2a1f17;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC",sans-serif;overflow:auto}
-#lk .lk-box{width:100%;max-width:440px;background:#fffaf0;color:#2a1f17;border-radius:20px;padding:26px 24px 22px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+#lk{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:radial-gradient(ellipse at 50% 100%,#f6e2b6 0%,#e9c98b 55%,#c79a5c 100%);color:#2a1f17;font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC",sans-serif;overflow:auto}
+#lk .lk-box{margin:auto;width:100%;max-width:440px;background:#fffaf0;color:#2a1f17;border-radius:20px;padding:26px 24px 22px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4)}
 #lk .lk-ic{width:58px;height:58px;margin:0 auto 10px;border-radius:50%;background:#b0842f;color:#fff;display:flex;align-items:center;justify-content:center}
 #lk .lk-ic svg{width:30px;height:30px}
 #lk .lk-t{font-size:28px;font-weight:700;margin-bottom:6px}
@@ -214,6 +215,7 @@ body.nosubs #sub{padding:6px}
 #lk button{font-size:22px;font-weight:700;padding:12px 34px;border:0;border-radius:999px;background:#b0842f;color:#fff;cursor:pointer}
 #lk #lk-msg{min-height:26px;margin-top:10px;font-size:18px;font-weight:600}
 #lk .lk-no{animation:lkshake .4s ease}
+@media (max-height:420px){#lk{padding:8px}#lk .lk-box{padding:10px 16px 8px}#lk .lk-ic{display:none}#lk .lk-t{font-size:20px;margin-bottom:2px}#lk .lk-s{font-size:14px;margin-bottom:8px}#lk input{font-size:18px;padding:7px 10px;margin-bottom:8px}#lk button{font-size:17px;padding:7px 24px}#lk #lk-msg{min-height:18px;margin-top:4px;font-size:14px}}
 @keyframes lkshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}75%{transform:translateX(9px)}}
 </style>
 <script>(function(){var K="bobo_open_bartholomew",P="exactly",L=document.getElementById("lk");
