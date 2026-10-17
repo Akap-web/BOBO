@@ -270,7 +270,7 @@ function show(id){clearTimeout(nextT);["rules","game","end"].forEach(function(s)
 function buildLineup(){
   var L=$("lineup");L.innerHTML="";
   GUESTS.forEach(function(g){
-    var b=el("button","pic");b.setAttribute("data-id",g.id);
+    var b=el("button","pic"+(found[g.id]?" found":""));b.setAttribute("data-id",g.id);
     var im=el("img");im.src=IMG[g.id];im.alt="";b.appendChild(im);b.appendChild(el("span",null,g.name));
     b.onclick=function(){tapPic(b,g);};L.appendChild(b);
   });
