@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Lost Tourist</title>
 <style>
 :root{--sea:#0e4a5a;--deep:#08313c;--coral:#e8613e;--coral2:#b8452a;--sun:#ffcf5c;--cream:#fff8ec;--ink:#1f2d33;--leaf:#3f9d5a;--leaf2:#2c7a43}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* le navigateur intégré ne grossit pas les textes */
 html,body{margin:0;height:100%}
 body{background:var(--deep);background-image:radial-gradient(ellipse at 50% 0%,#17697d 0%,var(--sea) 40%,var(--deep) 100%);color:var(--cream);
   font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB",sans-serif;overflow:hidden}
@@ -411,6 +412,14 @@ body.side #tbtns .big{margin:6px 0;justify-content:center;text-align:center;whit
 @media (max-height:520px) and (orientation:landscape){
   #pcard{width:36%;top:3%;right:3%;padding:3px 3px 4px}
   #ptourist{height:56%;left:34%}
+}
+/* téléphone tenu à l'horizontale : chaque réponse tient sur une ligne (la question est sur la carte touchée),
+   la boîte n'est plus plafonnée et le hall garde une hauteur lisible */
+@media (max-height:520px) and (orientation:landscape){
+  #board #notes{max-height:none;flex:0 1 auto;min-height:0}
+  #board .fact small{display:none}
+  #board .fact{padding:2px 7px 3px;margin-bottom:3px;line-height:1.2}
+  #board #arrive{flex:1 1 72px;min-height:72px}
 }
 </style>
 </head>

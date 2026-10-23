@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bartholomew</title>
 <style>
 :root{
@@ -10,6 +10,7 @@
   --brass:#c99a3b; --good:#5f9b6a; --soft:#8a7660;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* le navigateur intégré ne grossit pas les textes */
 html,body{margin:0;height:100%}
 body{background:var(--night);background-image:radial-gradient(ellipse at 50% 0%,#4a3524 0%,var(--night) 65%);
   color:var(--cream);font-family:Georgia,"Times New Roman","Songti SC",serif;overflow:hidden}
