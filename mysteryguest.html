@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Mystery Guest</title>
 <style>
 :root{--night:#170d2e;--plum:#2a1450;--gold:#f2c14e;--cream:#fff6e2;--ink:#2a1f17;--green:#7fd39a;--red:#b3122e}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* le navigateur intégré ne grossit pas les textes */
+body{position:fixed;top:0;bottom:0;left:0;right:0;left:env(safe-area-inset-left);right:env(safe-area-inset-right);-webkit-transform:translateZ(0);transform:translateZ(0)}   /* iPhone tenu à l'horizontale (Safari, WeChat) : le jeu reste entre les bords sûrs, l'encoche ne cache rien */
 html,body{margin:0;height:100%;overflow:hidden;background:var(--night);color:var(--cream);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,sans-serif}
 button{font:inherit;cursor:pointer;border:0}
@@ -150,6 +151,18 @@ section.on{display:flex}
   #rules li{font-size:17px;padding:6px 12px;margin-bottom:6px}
   #rules h1{font-size:28px;margin-bottom:6px}
 }
+@media (max-height:420px) and (orientation:landscape){
+  #game{padding:52px 8px 58px}
+  #wrapG{flex-direction:row}
+  #lineup{flex:0 0 46%;height:auto;grid-gap:6px;gap:6px;padding:0 8px 0 0}
+  #stage{flex:0 0 52%;height:auto;padding:5px 10px;margin-bottom:6px;border-radius:14px}
+  #bubble{padding:5px 10px;line-height:1.2;border-radius:12px}
+  #model{margin-top:5px}#model .q{padding:2px 8px}#model .mine{margin-top:2px}#model .free{margin-top:2px}
+  #topics{grid-gap:5px;gap:5px}
+  .topic{padding:2px;border-width:2px;border-radius:9px}
+  .topic.used{line-height:1.1}
+  #reveal img{height:10vh;border-width:3px}#reveal .who{font-size:17px;margin-top:2px}#reveal .line{font-size:13px;margin-top:2px;padding:2px 8px}
+}
 @media (max-height:340px){#rules{padding:42px 12px 12px}#rules h1{font-size:24px!important;margin-bottom:4px!important}#rules li{font-size:13px!important;padding:4px 8px!important;margin-bottom:4px!important}#rules ol{margin-bottom:6px!important}}
 </style>
 </head>
@@ -280,8 +293,20 @@ function buildLineup(){
   });
 }
 function fitCard(b){b.style.fontSize="";var fs=parseFloat(window.getComputedStyle(b).fontSize)||16,n=0;
-  while((b.scrollHeight>b.clientHeight+1||b.scrollWidth>b.clientWidth+1)&&fs>9&&n<24){fs-=1;b.style.fontSize=fs+"px";n++;}}
-function fitAll(){Array.prototype.forEach.call(document.querySelectorAll(".topic"),fitCard);}
+  while((b.scrollHeight>b.clientHeight+1||b.scrollWidth>b.clientWidth+1)&&fs>8&&n<24){fs-=1;b.style.fontSize=fs+"px";n++;}}
+function fitAll(){Array.prototype.forEach.call(document.querySelectorAll(".topic"),fitCard);fitStage();}
+/* petit écran : la bulle de l'invité et la question modèle rétrécissent jusqu'à tenir dans la scène */
+function fitStage(){
+  var S=$("stage"),parts=[$("bubble"),$("model").querySelector(".q"),$("model").querySelector(".mine"),$("model").querySelector(".free")],fr=parts[3];
+  parts.forEach(function(e){if(e)e.style.fontSize="";});if(fr)fr.style.display="";
+  if(!S.clientHeight)return;
+  function over(){var r=S.getBoundingClientRect(),bad=false;["bubble","model","reveal"].forEach(function(id){var e=$(id);if(!e.classList.contains("on"))return;var q=e.getBoundingClientRect();
+    if(q.top<r.top-1||q.bottom>r.bottom+1||q.left<r.left-1||q.right>r.right+1)bad=true;});return bad;}
+  if(!over())return;
+  if(fr)fr.style.display="none";
+  var base=parts.map(function(e){return e?parseFloat(window.getComputedStyle(e).fontSize)||16:0;}),k=1;
+  while(over()&&k>.5){k-=.05;parts.forEach(function(e,i){if(e&&i<3)e.style.fontSize=(base[i]*k).toFixed(1)+"px";});}
+}
 window.addEventListener("resize",function(){setTimeout(fitAll,60);});
 window.addEventListener("orientationchange",function(){setTimeout(fitAll,300);});
 function buildTopics(){
@@ -333,7 +358,7 @@ function showAnswer(t,fresh){
       typed.split(/(\s+)/).forEach(function(part){var w=norm(part)[0];if(w&&good[w]){var bb=el("b",null,part);mine.appendChild(bb);}else mine.appendChild(document.createTextNode(part));});
     }
   }
-  M.classList.add("on");
+  M.classList.add("on");fitStage();
 }
 $("mic").onclick=function(){
   if(!cur)return;SFX.mic();var t=cur.t,b=cur.b;

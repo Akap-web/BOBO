@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Bartholomew</title>
 <style>
 :root{
@@ -11,6 +11,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* le navigateur intégré ne grossit pas les textes */
+body{position:fixed;top:0;bottom:0;left:0;right:0;left:env(safe-area-inset-left);right:env(safe-area-inset-right);-webkit-transform:translateZ(0);transform:translateZ(0)}   /* iPhone tenu à l'horizontale (Safari, WeChat) : le jeu reste entre les bords sûrs, l'encoche ne cache rien */
 html,body{margin:0;height:100%}
 body{background:var(--night);background-image:radial-gradient(ellipse at 50% 0%,#4a3524 0%,var(--night) 65%);
   color:var(--cream);font-family:Georgia,"Times New Roman","Songti SC",serif;overflow:hidden}
@@ -192,6 +193,12 @@ body.nosubs #sub{padding:6px}
 #helpCard .way{font-size:34px;line-height:1.2;margin:6px 0;padding:6px 10px;border-radius:12px;background:#f3e3c0}
 #helpCard .or{font-size:15px;color:#8a7660;font-style:italic}
 @media (max-height:520px){#helpBtn{width:44px;height:44px;left:8px;bottom:8px}#helpCard .way{font-size:24px;margin:3px 0}}
+body.side #wrap{flex-direction:row;align-items:center;justify-content:center;height:100%;padding:52px 12px 8px}
+body.side #stage{flex:0 0 auto}
+body.side #board{flex:0 0 auto;margin:0 0 0 12px;justify-content:center}
+body.side .sentence{font-size:19px;margin:0 0 6px}
+body.side #helpBtn{left:auto;right:10px;bottom:8px}
+@media (max-height:340px){body.side{overflow:hidden}}
 @media (max-height:340px){body{overflow:auto}#rules{padding:44px 12px 12px}#rules h1{font-size:24px}#rules .lead{font-size:13px;margin:0 0 6px}#rules li{font-size:13px;padding:4px 8px;margin-bottom:4px}#rules li .n{margin-right:8px}#rules .bell{width:52px;height:52px}#rules .bell svg{width:30px;height:30px}}
 </style>
 </head>
@@ -497,13 +504,23 @@ var ASPECT={intro:960/536,act1:960/536,finale:960/536,salon:RW/VH};
 var BOARD_H={intro:120,act1:215,salon:150,finale:330};
 var K=0.3;
 function fit(){
-  var vw=window.innerWidth,vh=window.innerHeight,a=ASPECT[MODE];
-  var bh=BOARD_H[MODE]+(vw<600?30:0)-(vh<520&&vw>vh?40:0);
-  var w=Math.min(1240,vw-24,(vh-54-bh-22)*a);
-  if(w<200)w=200;
-  w=Math.floor(w);
-  $("stage").style.width=w+"px";$("stage").style.height=Math.round(w/a)+"px";
-  $("board").style.width=Math.max(w,Math.min(vw-24,MODE==="finale"?820:360))+"px";
+  var vw=document.body.clientWidth||window.innerWidth,vh=window.innerHeight,a=ASPECT[MODE];
+  /* téléphone tenu à l'horizontale (écran bas) : la scène à gauche, le plateau à droite, pour que rien ne passe sous le bord */
+  var side=vh<=420&&vw>vh&&vw>=560,w;
+  document.body.classList.toggle("side",side);
+  if(side){
+    var bw=Math.max(250,Math.min(380,Math.round(vw*.38)));
+    w=Math.min((vh-54-10)*a,vw-24-bw-12);if(w<200)w=200;w=Math.floor(w);
+    $("stage").style.width=w+"px";$("stage").style.height=Math.round(w/a)+"px";
+    $("board").style.width=Math.max(bw,vw-24-w-12)+"px";
+  }else{
+    var bh=BOARD_H[MODE]+(vw<600?30:0)-(vh<520&&vw>vh?40:0);
+    w=Math.min(1240,vw-24,(vh-54-bh-22)*a);
+    if(w<200)w=200;
+    w=Math.floor(w);
+    $("stage").style.width=w+"px";$("stage").style.height=Math.round(w/a)+"px";
+    $("board").style.width=Math.max(w,Math.min(vw-24,MODE==="finale"?820:360))+"px";
+  }
   K=w/RW;layoutSalon();
 }
 window.addEventListener("resize",fit);
