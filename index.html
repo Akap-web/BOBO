@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sophia's English Games</title>
 <style>
 :root{--ink:#2f2a26;--soft:#6d655c;
@@ -11,6 +11,7 @@
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* le navigateur intégré ne grossit pas les textes */
 html,body{margin:0;padding:0;min-height:100%}
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}   /* iPhone couché (Safari, WeChat) : l'encoche ne cache rien */
 body{color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden;
   background:#ffe9b8;background-image:radial-gradient(circle at 8% 0%,#fff6d8 0%,rgba(255,246,216,0) 45%),
     radial-gradient(circle at 100% 15%,#ffc9b5 0%,rgba(255,201,181,0) 42%),

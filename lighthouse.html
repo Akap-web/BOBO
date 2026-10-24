@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The Lighthouse</title>
 <style>
 :root{
@@ -474,6 +474,13 @@ body.gate #gate.bad{animation:shake .4s}
   #seas{width:100%;max-width:440px;gap:12px}
   .sea{min-width:0;flex:1 1 0;padding:14px 10px 15px}
 }
+
+/* iPhone tenu à l'horizontale (Safari, WeChat) : les décors vont jusqu'aux bords,
+   la barre, le plateau, le chat et l'étagère restent entre les bords sûrs (l'encoche ne cache rien) */
+#top{border-left:0 solid transparent;border-right:0 solid transparent;border-left-width:env(safe-area-inset-left);border-right-width:env(safe-area-inset-right)}
+#stage,#cover{left:0;right:0;left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
+#panel{margin-right:0;margin-right:env(safe-area-inset-right);max-height:calc(100vh - 78px);overflow-y:auto;-webkit-overflow-scrolling:touch}   /* sur un téléphone couché, le bas du réglage reste atteignable */
+#cat,.shelf{margin-left:0;margin-left:env(safe-area-inset-left)}
 </style>
 </head>
 <body data-screen="cover" data-tone="dark">
