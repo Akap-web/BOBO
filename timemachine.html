@@ -645,15 +645,52 @@ function board(h){if(Date.now()-lastInput<800){BQ=[];if(bT){clearTimeout(bT);bT=
 function boardReset(){BQ=[];bUntil=0;if(bT){clearTimeout(bT);bT=null;}}
 window.boardReset=boardReset;
 ["mousedown","touchstart"].forEach(function(t){document.addEventListener(t,function(){lastInput=Date.now();},true);});
-function say(h,small){if(!small||small==="Professor Puffin"){board(h);return;}speak(h,PITCH[small]||1.05,250);var b=$("bub");b.innerHTML="<small>"+esc(small)+"</small>"+h;b.classList.remove("on");void b.offsetWidth;b.classList.add("on");}
+function say(h,small){if(!small||small==="Professor Puffin"){board(h);return;}speak(h,PITCH[small]||1.05,250);var b=$("bub");b.innerHTML="<small>"+esc(small)+"</small>"+h;b.classList.remove("on");placeBub(small);void b.offsetWidth;b.classList.add("on");bubSoon();}
 function hush(){$("bub").classList.remove("on");}
+/* la bulle ne cache jamais un personnage (le professeur compris) : on l'essaie au-dessus de celui qui parle, puis à côté (le côté le plus libre d'abord),
+   puis dans les coins du haut, en rapetissant le texte s'il le faut ; sinon on garde la place qui recouvre le moins les personnages */
+var bubWho=null,bubT=[];
+/* les personnages bougent encore un instant (tuiles qui apparaissent, petit saut) : la bulle se recale ensuite */
+function bubSoon(){bubT.forEach(clearTimeout);bubT=[120,650].map(function(ms){return setTimeout(function(){if($("bub").classList.contains("on"))placeBub(bubWho);},ms);});}
+function drawn(im){var r=im.getBoundingClientRect();if(!r.width||!r.height)return null;var w=r.width,h=r.height;
+  if(im.naturalWidth&&im.naturalHeight){var k=Math.min(r.width/im.naturalWidth,r.height/im.naturalHeight);w=im.naturalWidth*k;h=im.naturalHeight*k;}
+  return {l:r.left+(r.width-w)/2-4,t:r.top+(r.height-h)/2-4,r:r.left+(r.width+w)/2+4,b:r.top+(r.height+h)/2+4};}
+function placeBub(who){
+  var b=$("bub"),St=$("stage"),s=St.getBoundingClientRect(),figs=[],me=null,best=null;bubWho=who;
+  b.style.left=b.style.top=b.style.maxWidth=b.style.fontSize="";
+  if(!s.width||!s.height)return;
+  Array.prototype.forEach.call([$("prof")].concat(Array.prototype.slice.call(St.querySelectorAll("#suspects.on .sus img,#scene.on .who,#scene.on .prop"))),function(im){
+    if(getComputedStyle(im).display==="none")return;var r=drawn(im);if(!r)return;figs.push(r);
+    var d=im.parentNode&&im.parentNode.parentNode,n=d&&/\bsus\b/.test(d.className||"")?d.querySelector(".nm"):null;
+    if((n&&n.textContent===who)||(!n&&/\bwho\b/.test(im.className)))me=r;});
+  if(!figs.length)return;
+  var fs0=parseFloat(getComputedStyle(b).fontSize)||18;
+  [1,.86,.74].some(function(f){b.style.fontSize=Math.round(fs0*f)+"px";
+    function at(mw,cx,top){mw=Math.max(60,mw);b.style.maxWidth=mw+"px";var w=b.offsetWidth,h=b.offsetHeight,x=typeof cx==="function"?cx(w):cx,y=typeof top==="function"?top(h):top,ov=0;
+      x=Math.max(s.left+w/2+2,Math.min(s.right-w/2-2,x));
+      figs.forEach(function(r){var dx=Math.min(x+w/2,r.r)-Math.max(x-w/2,r.l),dy=Math.min(y+h,r.b)-Math.max(y,r.t);if(dx>0&&dy>0)ov+=dx*dy;});
+      if(y<s.top||y+h>s.bottom)ov=1e9;if(!best||ov<best.ov)best={x:x,y:y,mw:mw,f:f,ov:ov};}
+    if(me){var side=function(h){return Math.max(s.top+2,Math.min(s.bottom-h-2,me.t));},lw=me.l-s.left-8,rw=s.right-me.r-8;
+      at(s.width*.94,(me.l+me.r)/2,function(h){return me.t-h-4;});
+      [[rw,function(w){return me.r+4+w/2;}],[lw,function(w){return me.l-4-w/2;}]].sort(function(a,c){return c[0]-a[0];}).forEach(function(q){if(q[0]>70)at(q[0],q[1],side);});}
+    at(s.width*.5,function(w){return s.left+2+w/2;},s.top+2);
+    at(s.width*.5,function(w){return s.right-2-w/2;},s.top+2);
+    at(s.width*.94,s.left+s.width/2,s.top+2);
+    return best.ov===0;});
+  b.style.fontSize=Math.round(fs0*best.f)+"px";b.style.maxWidth=best.mw+"px";b.style.left=Math.round(best.x-s.left)+"px";b.style.top=Math.round(best.y-s.top)+"px";
+}
 function profPose(p){var e=$("prof");e.src=pose("puffin",p);restart(e,"hop");}
 function view(which){["clock","dig","suspects","map","scene"].forEach(function(k){$(k).classList.toggle("on",k===which);});setTimeout(fit,0);}
 function sky(part){var S=$("sky");if(!part){S.classList.remove("on");setTimeout(fit,0);return;}S.innerHTML=SKY[part]+FRAME;S.classList.add("on");restart(S,"new");setTimeout(fit,0);}
 function deskMode(m){$("build").classList.toggle("on",m==="build");$("go").classList.toggle("on",m==="go");$("ends").classList.toggle("on",m==="ends");
   document.body.classList.toggle("building",m==="build");setTimeout(fit,0);}
 function steps(n){boardReset();var S=$("steps");S.innerHTML="";[ICON.clock,ICON.talk,ICON.look,ICON.cup].forEach(function(ic,i){var x=el("i",i<n?"done":(i===n?"now":""));x.innerHTML=i<n?ICON.tick:ic;S.appendChild(x);});}
-function note(h,cls){var l=el("div","l"+(cls?" "+cls:""));l.innerHTML=h;$("lines").appendChild(l);var N=$("note");N.scrollTop=N.scrollHeight;SFX.page();}
+function note(h,cls){var l=el("div","l"+(cls?" "+cls:""));l.innerHTML=h;$("lines").appendChild(l);var N=$("note");N.__free=false;N.scrollTop=N.scrollHeight;SFX.page();}
+/* le carnet reste calé sur sa dernière ligne quand la page change de taille (tuiles, boutons de fin, tableau noir),
+   sauf si l'élève l'a fait défiler elle-même pour relire */
+function notePin(){var N=$("note");if(!N.__free)N.scrollTop=N.scrollHeight;}
+(function(){var N=$("note");N.addEventListener("scroll",function(){N.__free=N.scrollTop+N.clientHeight<N.scrollHeight-8;});
+  try{if(window.ResizeObserver)new ResizeObserver(notePin).observe(N);}catch(e){}})();
 function cw(){return C.tim.join(" ");}
 
 /* ---------- la voix : chaque phrase réussie et chaque réponse des personnages est dite à voix haute ----------
@@ -1616,6 +1653,7 @@ document.addEventListener("click",function(e){var Pn=$("panel");if(Pn.classList.
 
 /* ---------- mise en page ---------- */
 function fit(){
+  notePin();
   var W=document.body.clientWidth||window.innerWidth,H=window.innerHeight;
   var kh=Math.max(28,Math.min(52,Math.round(H*.075)));if(W<520)kh=Math.min(kh,38);
   document.documentElement.style.setProperty("--kh",kh+"px");
@@ -1632,6 +1670,7 @@ function fit(){
   var mps=$("map").querySelectorAll(".mp"),n=mps.length;
   if(n){var lab=24,best=0,cols=1;for(var c=1;c<=n;c++){var r=Math.ceil(n/c),w=Math.min((sw-c*16)/c,((sh-r*(lab+14))/r)*16/9,320);if(w>best){best=w;cols=c;}}
     Array.prototype.forEach.call(mps,function(m){m.style.width=Math.max(70,best)+"px";m.style.minWidth="0";});}
+  if($("bub").classList.contains("on")){placeBub(bubWho);bubSoon();}
 }
 window.addEventListener("resize",fit);
 window.addEventListener("orientationchange",function(){setTimeout(fit,300);});
