@@ -575,7 +575,7 @@ var SYN={
 function rec(k,vol,fb){return function(){if(SND[k])return play(k,vol);if(fb)fb();return null;};}
 var SFX={tap:SYN.tap,back:SYN.back,tick:SYN.tick,zap:rec("sfx_zap",.6,SYN.zap),snap:SYN.snap,huh:SYN.huh,silly:SYN.silly,
   warp:rec("sfx_time_warp",.8,function(){SYN.warp();rec("sfx_whoosh",.7)();}),cheer:rec("sfx_applause",.8,SYN.happy),fanfare:rec("sfx_fanfare",.8,SYN.fanfare),
-  chime:rec("sfx_chime",.7,SYN.chime),stamp:rec("sfx_stamp",.9,SYN.stamp),page:rec("sfx_page",.8,SYN.tap),ding:rec("sfx_bell",.6,SYN.ding),pop:rec("sfx_pop",.6,SYN.tap),
+  chime:rec("sfx_chime",.7,SYN.chime),stamp:rec("sfx_stamp",.9,SYN.stamp),page:rec("sfx_page",.8,SYN.tap),ding:rec("sfx_bell",.4,SYN.ding),pop:rec("sfx_pop",.6,SYN.tap),
   splash:rec("sfx_splash",.7,SYN.whoosh),camera:rec("sfx_camera",.7,SYN.tap)};
 
 /* ---------- données ---------- */
@@ -679,7 +679,7 @@ function vNext(){
   var it=VQ.shift(),t=it.t;vBusy=true;duck(true);
   var done=function(){if(!vBusy)return;clearTimeout(vSafe);vBusy=false;vCur=null;vEnd=Date.now();if(!VQ.length)setTimeout(function(){if(!vBusy&&!VQ.length)duck(false);},700);setTimeout(vNext,350);};
   var keys=SND[vkey(t)]?[vkey(t)]:voiceChain(t);
-  if(keys){playChain(keys,done);return;}
+  if(keys){playChain(keys,done,t);return;}
   /* uniquement les voix enregistrées : une phrase sans enregistrement n'est pas dite */
   if(window.__voiceMiss)window.__voiceMiss.push(t);done();
 }
@@ -694,9 +694,24 @@ function voiceChain(t){
   for(var i=1;i<=n;i++){best[i]=1e9;from[i]=-1;for(var j=Math.max(0,i-14);j<i;j++){if(best[j]>=1e9)continue;var k=w.slice(j,i).join("_");if(D[k]&&best[j]+1<best[i]){best[i]=best[j]+1;from[i]=j;}}}
   if(best[n]>=1e9||best[n]>5||best[n]<2)return null;
   var out=[],i2=n;while(i2>0){var j2=from[i2];out.unshift(D[w.slice(j2,i2).join("_")]);i2=j2;}return out;}
-function playChain(keys,done){var c=ac();if(!c||!soundOn){if(done)done();return;}var bufs=[],n=0;vSafe=setTimeout(function(){if(done)done();},12000);
+/* jointure dans la phrase (aucune ponctuation entre deux morceaux) : « The crab took the golden cup at » + « nine o'clock »
+   s'enchaînent sans trou ; entre deux phrases (« Not me! » + « I was at the beach! »), la pause d'origine reste */
+function joins(keys,txt){var fl=[],m,re=/[a-z0-9]+|[.!?;:,…]/g,s=(txt||"").toLowerCase();
+  while((m=re.exec(s))){if(/[a-z0-9]/.test(m[0]))fl.push(false);else if(fl.length)fl[fl.length-1]=true;}
+  var out=[],p=0;keys.forEach(function(k,i){p+=k.slice(2).split("_").length;out.push(i<keys.length-1&&!fl[p-1]);});return out;}
+/* début de la voix dans un morceau : 35 dB sous son maximum, moins 15 ms ; fin : 30 dB sous son maximum, plus 30 ms
+   (le silence, le souffle et le « t » final détaché de « at » sont coupés, comme dans « at nine » dit d'une traite) */
+function edges(b){if(b.__ed)return b.__ed;var x=b.getChannelData(0),sr=b.sampleRate,hop=Math.round(sr*.005),n=Math.floor(x.length/hop),e=[],mx=0,i,j;
+  for(i=0;i<n;i++){var q=0;for(j=i*hop;j<(i+1)*hop;j++)q+=x[j]*x[j];e.push(q);if(q>mx)mx=q;}
+  var a=0,z=n-1;while(a<n-1&&e[a]<mx*Math.pow(10,-3.5))a++;while(z>0&&e[z]<mx*.001)z--;
+  b.__ed={a:Math.max(0,a*hop/sr-.015),z:Math.min(b.duration,(z+1)*hop/sr+.03)};return b.__ed;}
+function playChain(keys,done,txt){var c=ac();if(!c||!soundOn){if(done)done();return;}var bufs=[],n=0,J=joins(keys,txt);vSafe=setTimeout(function(){if(done)done();},12000);
   keys.forEach(function(k,i){getBuf(k,function(b){bufs[i]=b;n++;if(n<keys.length)return;var t=c.currentTime+.05,t0=t,srcs=[];
-    bufs.forEach(function(bb){var s2=c.createBufferSource(),g=c.createGain();s2.buffer=bb;g.gain.value=.95;s2.connect(g);g.connect(c.destination);s2.start(t);srcs.push(s2);t+=Math.max(.1,bb.duration-.06);});
+    bufs.forEach(function(bb,i){var s2=c.createBufferSource(),g=c.createGain(),from=i>0&&J[i-1]?edges(bb).a:0,len=Math.max(.05,(J[i]?edges(bb).z:bb.duration)-from);
+      s2.buffer=bb;g.gain.value=.95;s2.connect(g);g.connect(c.destination);
+      if(from>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.95,t+.015);}
+      if(J[i]){g.gain.setValueAtTime(.95,t+len-.03);g.gain.linearRampToValueAtTime(0,t+len);}
+      s2.start(t,from,len);srcs.push(s2);t+=J[i]?len-.03:Math.max(.1,len-.06);});
     vCur=srcs;clearTimeout(vSafe);vSafe=setTimeout(function(){if(done)done();},(t-t0)*1000+120);});});}
 var sentences=store("tm_sent")||[];
 function keepSentence(t){t=plain(t);if(!t)return;sentences=sentences.filter(function(x){return x.t!==t;});sentences.push({t:t,d:Date.now()});if(sentences.length>300)sentences=sentences.slice(-300);store("tm_sent",sentences);}
