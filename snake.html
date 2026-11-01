@@ -119,7 +119,7 @@ h1{margin:0 0 2px;font-family:Georgia,serif;font-size:46px;font-size:58px;font-s
 #contBtn{margin:4px auto 6px;background:#3f8f4f;box-shadow:0 4px 0 #2c5a28;font-size:18px}#contBtn small{font-weight:400;opacity:.9}
 #sbub{position:absolute;left:50%;top:30%;transform:translate(-50%,0) scale(.6);opacity:0;z-index:6;background:#fff;border:3px solid #3f7a3a;border-radius:18px;padding:6px 14px;font-size:20px;font-size:calc(var(--kh)*.5);font-weight:700;color:#a8466b;pointer-events:none;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;transition:all .25s}
 #sbub.on{opacity:1;transform:translate(-50%,0) scale(1)}
-.bug{position:absolute;left:0;top:0;z-index:0;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.bug{position:absolute;left:0;top:0;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
 #scv{position:absolute;z-index:2;pointer-events:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.28))}
 #dpad{position:absolute;right:8px;bottom:6px;z-index:4;width:150px;height:150px;width:calc(var(--kh)*3.4);height:calc(var(--kh)*3.4);opacity:.82}
 #dpad button{position:absolute;width:33.3%;height:33.3%;border:0;border-radius:14px;background:rgba(255,248,234,.9);color:#3f7a3a;font-size:22px;font-size:calc(var(--kh)*.55);box-shadow:0 4px 0 #2c5a28;padding:0;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
@@ -511,7 +511,7 @@ function savedGame(){var s=store("snake_save");return s&&s.it&&s.k?s:null;}
 function resumeGame(){var s=savedGame();if(!s){drawTitle();return;}clearTimers();cart=s.k;level=s.level;show("game");
   G={friends:s.friends||0,k:s.k,n:s.n,r:s.r,used:s.used||[],got:s.got||[],hints:s.hints,hn:0,lives:3,live:false,tickT:null};dots();
   G.it=s.it;G.k2=Math.min(s.k2||0,G.it.eat.length-1);hearts();grid();drawPrompt();resetBoard();G.len=3+Math.floor(G.k2/2);G.dlen=G.len;
-  G.speed=Math.max(level===1?210:165,(level===1?340:275)-G.r*16);
+  G.speed=stepMs();
   $("shint").textContent="Welcome back! Touch the grass to start!";$("shint").style.display="";if(G.it.a)speak(G.it.a,1,300);}
 /* ---------- le jeu ---------- */
 function startGame(){clearTimers();show("game");
@@ -519,6 +519,8 @@ function startGame(){clearTimers();show("game");
   dots();nextRound();}
 function stopSnake(){if(!G)return;clearTimeout(G.tickT);G.live=false;G.over=true;}
 function hearts(){var L=$("slives");L.innerHTML="";for(var i=0;i<3;i++)L.appendChild(el("span",i<G.lives?"h on":"h","♥"));}
+/* durée d'un pas ; sur un petit écran (téléphone), le serpent va 30 % moins vite */
+function stepMs(){var b=Math.max(level===1?210:165,(level===1?340:275)-G.r*16),F=$("sfield"),m=Math.min(F.clientWidth||9999,F.clientHeight||9999);return Math.round(b*(m<500?1.3:1));}
 function grid(){var F=$("sfield"),W=F.clientWidth,H=F.clientHeight,cols=W<500?9:(W<800?12:14),c0=W/cols;if(c0*5>H){c0=H/5;cols=Math.max(5,Math.round(W/c0));}
   var rows=Math.max(5,Math.round(H/(W/cols)));
   /* la grille couvre toute la fenêtre : le serpent disparaît au bord de l'écran */
@@ -531,7 +533,7 @@ function nextRound(){
   if(G.r>=G.n){finish();return;}
   G.it=makeItem(G.k);G.k2=0;G.lives=3;hearts();grid();
   drawPrompt();resetBoard();
-  G.speed=Math.max(level===1?210:165,(level===1?340:275)-G.r*16);saveGame();
+  G.speed=stepMs();saveGame();
   $("shint").textContent="Touch the grass to start!";$("shint").style.display="";
   if(G.it.a)speak(G.it.a,1,300);
 }
@@ -694,6 +696,8 @@ function spawnBug(k){var F=$("sfield"),W=G.W,H=G.H,e=el("img","bug "+k);e.src=im
   if(k==="butterfly"){var used=BUGS.map(function(x){return x.hue;}),hues=[0,30,60,90,130,170,200,230,260,290,320].filter(function(h){return used.indexOf(h)<0;});b.hue=pick(hues.length?hues:[0]);
     e.style.filter="hue-rotate("+b.hue+"deg) saturate(1.25) drop-shadow(0 2px 2px rgba(0,0,0,.25))";sz*=.8+Math.random()*.4;e.style.width=sz+"px";b.sz=sz;}
   if(k==="ladybug"&&Math.random()<.35){e.style.filter="hue-rotate(40deg) saturate(1.3) drop-shadow(0 2px 2px rgba(0,0,0,.25))";}
+  /* escargots brun, roux ou crème */
+  if(k==="snail"){e.style.filter=pick(["saturate(1.2) hue-rotate(-8deg) brightness(.62) contrast(1.2)","saturate(1.45) hue-rotate(-14deg) brightness(.93)","sepia(.55) saturate(.75) brightness(1.18)"])+" drop-shadow(0 2px 2px rgba(0,0,0,.25))";}
   if(k==="butterfly"){b.dur=11000+Math.random()*7000;b.y0=H*(.25+.5*Math.random());b.dir=Math.random()<.5?1:-1;b.amp=H*.12;}
   if(k==="ladybug"){b.dur=20000;var a=Math.random()*6.28;b.x0=W*(.2+.6*Math.random());b.y0=H*(.25+.6*Math.random());b.ang=a;b.dist=Math.min(W,H)*.5;}
   if(k==="snail"){b.dur=45000;b.dir=Math.random()<.5?1:-1;b.y0=H-sz*.75-4;}
