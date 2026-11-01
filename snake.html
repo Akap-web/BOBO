@@ -845,8 +845,17 @@ var homeArm=0;$("homeBtn").addEventListener("click",function(e){if(screen!=="gam
 
 function fit(){var W=document.body.clientWidth||window.innerWidth,H=window.innerHeight;
   var kh=Math.max(26,Math.min(48,Math.round(H*.07)));if(W<520)kh=Math.min(kh,34);document.documentElement.style.setProperty("--kh",kh+"px");
-  if(screen==="game"&&G&&G.trail&&!G.live){var oc=G.cols,orr=G.rows;grid();if(oc!==G.cols||orr!==G.rows){resetBoard();}else{relayout();}}}
+  if(screen==="game"&&G&&G.trail&&!G.live){var oc=G.cols,orr=G.rows;grid();if(oc!==G.cols||orr!==G.rows){resetBoard();}else{relayout();}}
+  else if(screen==="game"&&G&&G.trail&&sizeChanged()){
+    /* l'écran a changé de format pendant la partie (téléphone tourné, barres de WeChat) : la pelouse est refaite
+       à la nouvelle taille, sinon elle dépasse de l'écran et le serpent sort de la vue ; la phrase continue où elle en était */
+    stopTick();G.live=false;var ln=G.len;grid();resetBoard();G.len=ln;G.dlen=ln;
+    $("shint").textContent="Touch the grass to go on!";$("shint").style.display="";}}
+function sizeChanged(){var F=$("sfield");return F.clientWidth>0&&F.clientHeight>0&&(Math.abs(F.clientWidth-G.W)>1||Math.abs(F.clientHeight-G.H)>1);}
 window.addEventListener("resize",fit);
+window.addEventListener("orientationchange",function(){setTimeout(fit,350);});
+/* certains navigateurs (WeChat) changent la taille sans prévenir : on vérifie deux fois par seconde */
+setInterval(function(){if(screen==="game"&&G&&G.trail&&sizeChanged())fit();},500);
 window.__snake=function(){if(!G||!G.it||screen!=="game")return null;var F=$("sfield").getBoundingClientRect();
   return {want:G.it.eat[G.k2],k2:G.k2,n:G.it.eat.length,live:G.live,lives:G.lives,head:headCell(),dir:G.dir,p:G.live?(now()-G.tStep)/G.speed:1,from:G.trail.length>=3?[md(G.trail[G.trail.length-2][0],G.cols),md(G.trail[G.trail.length-2][1],G.rows)]:null,fdir:G.trail.length>=3?[G.trail[G.trail.length-2][0]-G.trail[G.trail.length-3][0],G.trail[G.trail.length-2][1]-G.trail[G.trail.length-3][1]]:null,q:G.q.length,cols:G.cols,rows:G.rows,cs:G.cs,ox:G.ox,oy:G.oy,fl:F.left,ft:F.top,
     words:G.wds.map(function(o){return {w:o.w,c:o.c,c0:o.c0,n:o.n,row:o.row};}),r:G.r};};
