@@ -608,6 +608,7 @@ function tick(){
   if(window.__vbusy&&window.__vbusy()){G.tickT=setTimeout(tick,200);return;}
   /* la tête vient d'arriver : y a-t-il un mot ? */
   var wi=wordAt(headCell());if(wi>=0){eat(wi);if(!G.live)return;}
+  if(G.hold>now()){var hw=G.hold-now();G.hold=0;G.tickT=setTimeout(tick,hw);return;}
   if(G.pend.length){var pw=G.pend.shift();addWord(pw);}
   while(G.q.length){var nd=G.q.shift();if(!(nd[0]===-G.dir[0]&&nd[1]===-G.dir[1])&&!(nd[0]===G.dir[0]&&nd[1]===G.dir[1])){G.dir=nd;break;}}
   var h=G.trail[G.trail.length-1],n=[h[0]+G.dir[0],h[1]+G.dir[1]];
@@ -722,7 +723,8 @@ function eat(wi){var o=G.wds[wi],it=G.it,want=it.eat[G.k2];G.wds.splice(wi,1);bu
     if(G.k2+G.win-1<it.eat.length)addWord(it.eat[G.k2+G.win-1]);return;}
   /* le même mot peut servir plus tard dans la phrase (« the … the ») : on le remet */
   SFX2.bonk();face("yuck");G.streak=0;restart($("sfield"),"wob");G.lives--;hearts();restart($("slives"),"wob");
-  if(G.lives>0)funny(OOPS);
+  /* mauvais mot : le serpent s'arrête un instant, le temps de lire la bulle */
+  if(G.lives>0){funny(OOPS);G.hold=now()+1600;}
   if(it.eat.slice(G.k2,G.k2+G.win).indexOf(o.w)>=0)addWord(o.w);
   if(G.lives<=0){G.live=false;stopTick();SFX2.sad();var lt=pickNew(LOST);$("shint").textContent=lt;$("shint").style.display="";
     later(function(){SFX2.rewind();G.k2=0;G.lives=3;hearts();drawLine();resetBoard();saveGame();$("shint").textContent="Touch the grass to start!";},2200);}}
@@ -735,7 +737,7 @@ var lastFun=[];function pickNew(a){var c=a.filter(function(x){return lastFun.ind
 var funT=null;function funny(list){var t=pickNew(list),B=$("sbub");B.textContent=t;
   /* la bulle s'affiche près de la tête (au-dessus, ou en dessous si la tête est en haut) */
   try{var h=cellXY(headCell()),hy=h.y+G.ch/2,hx=h.x+G.cw/2,bw=B.offsetWidth||260;B.style.left=Math.max(bw/2+6,Math.min(G.W-bw/2-6,hx))+"px";var sd=shroomSide();if(sd[0]!==0){B.style.top=(hy<G.H*.45?hy+G.ch*.7:hy-G.ch*1.5)+"px";B.style.left=Math.max(bw/2+6,Math.min(G.W-bw/2-6,hx-sd[0]*(bw/2+G.cw*.6)))+"px";}
-    else{B.style.top=(sd[1]>0?hy-G.ch*1.5:hy+G.ch*.7)+"px";}}catch(e){}B.classList.remove("on");void B.offsetWidth;B.classList.add("on");clearTimeout(funT);funT=setTimeout(function(){B.classList.remove("on");},2200);}
+    else{B.style.top=(sd[1]>0?hy-G.ch*1.5:hy+G.ch*.7)+"px";}}catch(e){}B.classList.remove("on");void B.offsetWidth;B.classList.add("on");clearTimeout(funT);funT=setTimeout(function(){B.classList.remove("on");},3200);}
 function boing(){SFX2.bonk();}
 /* ---------- bruitages 8 bits ---------- */
 var SFX2={
