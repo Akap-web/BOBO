@@ -53,7 +53,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 #veh.pop{animation:pop .6s ease}
 /* ---------- la carte d'activité ---------- */
 #game{flex-direction:column;align-items:center;justify-content:flex-start;padding:54px 10px 8px;pointer-events:none}
-#card{pointer-events:auto;display:flex;align-items:flex-start;width:100%;max-width:900px;background:rgba(255,248,234,.92);border-radius:20px;padding:10px 14px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+#card{pointer-events:auto;display:flex;align-items:flex-start;width:100%;max-width:900px;background:rgba(255,248,234,.78);border-radius:20px;padding:10px 14px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
 #card.new{animation:pop .45s ease}#card.hide{display:none}
 #pipA{flex:0 0 auto;height:110px;height:calc(var(--kh)*2.4);margin-right:10px;filter:drop-shadow(0 4px 5px rgba(0,0,0,.25))}
 #cbody{flex:1 1 auto;min-width:0;text-align:left}
@@ -109,7 +109,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 #flames{position:fixed;left:0;top:0;width:100%;height:100%;z-index:4;pointer-events:none}
 /* ---------- accueil, règles ---------- */
 #title,#rules{flex-direction:column;align-items:center;justify-content:flex-start;padding:58px 16px 20px;overflow:auto;text-align:center}
-.box{width:100%;max-width:820px;margin:auto;background:rgba(255,248,234,.92);border-radius:22px;padding:14px 18px 18px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+.box{width:100%;max-width:820px;margin:auto;background:rgba(255,248,234,.82);border-radius:22px;padding:14px 18px 18px;box-shadow:0 14px 40px rgba(0,0,0,.35)}
 h1{margin:0 0 2px;font-family:Georgia,serif;font-size:46px;font-size:56px;font-size:clamp(28px,5.6vw,56px);color:var(--plum)}
 .sub{margin:0 0 8px;font-size:20px;color:var(--teal2)}
 #tPip{height:150px;height:28vh;max-height:220px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.25))}
@@ -461,36 +461,39 @@ var SONGS={
  underwater:(function(){var E=[56,59,63],Cm=[56,61,64],A=[57,61,64],B=[59,63,66];
   return {beats:4,sub:2,e:.32,arp:"slow",mel:"bell",vol:1.1,oct2:0,bars:[
   bar([40,52],Q(E),[[0,80,2],[2,83,2]],1),bar([37,49],Q(Cm),[[0,80,1],[1,78,1],[2,76,2]],1),
-  bar([33,45],Q(A),[[0,76,1],[1,78,1],[2,80,1],[3,83,1]],1),bar([35,47],Q(B),[[0,82,3],[3,78,1]],1),
+  bar([33,45],Q(A),[[0,76,1],[1,78,1],[2,81,1],[3,85,1]],1),bar([35,47],Q(B),[[0,83,3],[3,78,1]],1),
   bar([40,52],Q(E),[[0,80,2],[2,83,1],[3,85,1]],1),bar([37,49],Q(Cm),[[0,83,2],[2,80,2]],1),
   bar([33,45],Q(A),[[0,78,1],[1,76,1],[2,73,2]],1),bar([35,47],Q(B),[[0,75,2],[2,78,2]],1)]};})(),
  /* la banquise : boîte à musique cristalline en la majeur */
  ice:(function(){var A=[69,73,76],E=[68,71,76],Fm=[69,73,78],D=[69,74,78],Bm=[71,74,78];
   return {beats:4,sub:2,e:.19,arp:"alberti",mel:"bell",vol:.8,oct2:0,bars:[
   bar([45,57],Q(A),[[0,88,1],[1,85,1],[2,88,1],[3,93,1]]),bar([40,52],Q(E),[[0,92,2],[2,88,2]]),
-  bar([42,54],Q(Fm),[[0,90,1],[1,88,1],[2,85,1],[3,88,1]]),bar([38,50],Q(D),[[0,86,2],[2,85,1],[3,83,1]]),
+  bar([42,54],Q(Fm),[[0,90,1],[1,88,1],[2,85,1],[3,88,1]]),bar([38,50],Q(D),[[0,86,2],[2,81,1],[3,83,1]]),
   bar([45,57],Q(A),[[0,85,1],[1,88,1],[2,93,2]],1),bar([35,47],Q(Bm),[[0,90,1],[1,86,1],[2,83,2]],1),
   bar([40,52],Q(E),[[0,88,1],[1,86,1],[2,83,1],[3,80,1]],1),bar([45,57],Q(A),[[0,81,4]],1)]};})(),
  /* le désert : cordes pincées, en ré (mode dorien), qui avancent comme une caravane */
  desert:(function(){var Dm=[57,62,65],C=[55,60,64],G=[55,59,62],Am=[57,60,64];
   return {beats:4,sub:2,e:.17,arp:"pulse",mel:"pluck",vol:1,oct2:0,bars:[
-  bar([38,50],Q(Dm),[[0,74,1],[1,76,.5],[1.5,77,.5],[2,76,1],[3,74,1]]),bar([36,48],Q(C),[[0,72,1.5],[1.5,74,.5],[2,76,2]]),
+  bar([38,50],Q(Dm),[[0,74,1],[1,76,.5],[1.5,77,.5],[2,81,1],[3,77,1]]),bar([36,48],Q(C),[[0,72,1.5],[1.5,74,.5],[2,76,2]]),
   bar([31,43],Q(G),[[0,79,1],[1,77,.5],[1.5,76,.5],[2,74,1],[3,71,1]]),bar([38,50],Q(Dm),[[0,74,3],[3,69,1]]),
-  bar([38,50],Q(Dm),[[0,74,.5],[.5,77,.5],[1,81,1],[2,79,.5],[2.5,77,.5],[3,76,1]],1),bar([36,48],Q(C),[[0,79,1],[1,76,1],[2,72,2]],1),
-  bar([33,45],Q(Am),[[0,76,1],[1,74,.5],[1.5,72,.5],[2,71,1],[3,72,1]],1),bar([38,50],Q(Dm),[[0,74,4]],1)]};})(),
+  bar([38,50],Q(Dm),[[0,74,.5],[.5,77,.5],[1,81,1],[2,79,.5],[2.5,77,.5],[3,74,1]],1),bar([36,48],Q(C),[[0,79,1],[1,76,1],[2,72,2]],1),
+  bar([33,45],Q(Am),[[0,76,1],[1,74,.5],[1.5,72,.5],[2,69,1],[3,72,1]],1),bar([38,50],Q(Dm),[[0,74,4]],1)]};})(),
  /* l'espace : arpèges lents et lumineux (do lydien), cordes en fond */
- space:(function(){var C=[60,64,67,71],D=[62,66,69,74],Am=[57,60,64,69],Em=[52,55,59,64],F=[53,57,60,64],G=[55,59,62,67];
+ space:(function(){var C=[60,64,67,72],D=[62,66,69,74],Am=[57,60,64,69],Em=[52,55,59,64],F=[53,57,60,64],G=[55,59,62,67];
   return {beats:4,sub:4,e:.14,arp:"stars",mel:"piano",vol:.9,oct2:0,bars:[
-  bar([36,48],Q(C),[[0,76,3],[3,79,1]],1),bar([36,48],Q(D),[[0,78,4]],1),bar([36,48],Q(C),[[0,79,2],[2,83,2]],1),bar([36,48],Q(D),[[0,81,3],[3,78,1]],1),
-  bar([33,45],Q(Am),[[0,76,2],[2,72,2]],1),bar([40,52],Q(Em),[[0,71,2],[2,74,2]],1),bar([41,53],Q(F),[[0,72,2],[2,76,2]],1),bar([43,55],Q(G),[[0,74,4]],1)]};})(),
- /* le gâteau : « Happy Birthday to You » (Mildred et Patty Hill, domaine public), en valse, boîte à musique */
- birthday:(function(){var F=[57,60,65],C7=[58,60,64],Bb=[58,62,65];
-  return {beats:3,sub:2,e:.3,arp:"waltz",mel:"bell",vol:1,oct2:0,bars:[
-  bar([41,53],Q(F,3),[[2,72,.75],[2.75,72,.25]]),bar([41,53],Q(F,3),[[0,74,1],[1,72,1],[2,77,1]]),
-  bar([36,48],Q(C7,3),[[0,76,2],[2,72,.75],[2.75,72,.25]]),bar([36,48],Q(C7,3),[[0,74,1],[1,72,1],[2,79,1]]),
-  bar([41,53],Q(F,3),[[0,77,2],[2,72,.75],[2.75,72,.25]]),bar([41,53],Q(F,3),[[0,84,1],[1,81,1],[2,77,1]]),
-  bar([34,46],Q(Bb,3),[[0,76,1],[1,74,1],[2,82,.75],[2.75,82,.25]]),bar([36,48],[F,F,C7],[[0,81,1],[1,77,1],[2,79,1]]),
-  bar([41,53],Q(F,3),[[0,77,3]]),bar([41,53],Q(F,3),[],1)]};})()
+  bar([36,48],Q(C),[[0,76,3],[3,79,1]],1),bar([36,48],Q(D),[[0,78,4]],1),bar([36,48],Q(C),[[0,79,2],[2,84,2]],1),bar([36,48],Q(D),[[0,81,3],[3,78,1]],1),
+  bar([33,45],Q(Am),[[0,76,2],[2,72,2]],1),bar([40,52],Q(Em),[[0,71,2],[2,74,2]],1),bar([38,50],Q(D),[[0,74,2],[2,78,2]],1),bar([43,55],Q(G),[[0,74,4]],1)]};})(),
+ /* le gâteau : « Happy Birthday to You » (Mildred et Patty Hill, domaine public), version pop moderne :
+    boîte à musique doublée d'un piano doux, accords en contretemps, basse, petite batterie (grosse caisse, claquement de mains, charleston).
+    Chaque note longue de la mélodie tombe sur une note de l'accord (vérifié par programme). */
+ birthday:(function(){var F=[57,60,65],Bb=[58,62,65],C=[55,60,64],Gm=[55,58,62],Dm=[57,62,65];
+  return {beats:3,sub:2,e:.27,arp:"pop",mel:"bell",mel2:1,bass2:1,dr:{k:[0],s:[4],h:1},vol:.75,oct2:0,bars:[
+  bar([41,53],Q(F,3),[],1),bar([41,53],Q(F,3),[[2,72,.75],[2.75,72,.25]],1),
+  bar([41,53],[Bb,F,F],[[0,74,1],[1,72,1],[2,77,1]]),bar([36,48],Q(C,3),[[0,76,2],[2,72,.75],[2.75,72,.25]]),
+  bar([36,48],[Gm,C,C],[[0,74,1],[1,72,1],[2,79,1]]),bar([41,53],Q(F,3),[[0,77,2],[2,72,.75],[2.75,72,.25]]),
+  bar([41,53],[F,Dm,Dm],[[0,84,1],[1,81,1],[2,77,1]],1),bar([43,55],[C,Gm,Gm],[[0,76,1],[1,74,1],[2,82,.75],[2.75,82,.25]],1),
+  bar([36,48],[F,F,C],[[0,81,1],[1,77,1],[2,79,1]],1),bar([41,53],Q(F,3),[[0,77,3]],1),
+  bar([34,46],Q(Bb,3),[],1),bar([36,48],Q(C,3),[],1)]};})()
 };
 MUS.song="jungle";MUS.pend=null;
 /* changer de morceau : le nouveau commence au début de la mesure suivante */
@@ -501,6 +504,12 @@ function mBell(c,m,t,d,v){var f=mHz(m),g=c.createGain();g.gain.value=v;g.connect
 function mPluck(c,m,t,d,v){var f=mHz(m),g=c.createGain(),lp=c.createBiquadFilter();lp.type="lowpass";lp.frequency.setValueAtTime(f*8,t);lp.frequency.exponentialRampToValueAtTime(f*1.5,t+.35);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.004);g.gain.setTargetAtTime(0,t+.004,.28);lp.connect(g);g.connect(MUS.dry);if(MUS.rev)g.connect(MUS.rev);
   [["triangle",1,1],["sine",2,.35],["sine",3,.15]].forEach(function(p){var o=c.createOscillator(),og=c.createGain();o.type=p[0];o.frequency.value=f*p[1];og.gain.value=p[2];o.connect(og);og.connect(lp);o.start(t);o.stop(t+1.6);});}
+function mKick(c,t,v){var o=c.createOscillator(),g=c.createGain();o.type="sine";o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.38*v,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.connect(g);g.connect(MUS.dry);o.start(t);o.stop(t+.32);}
+function mNoise(c,t,v,type,f,q,dec,rev){if(!NOISE)return;var s=c.createBufferSource(),bp=c.createBiquadFilter(),g=c.createGain();s.buffer=NOISE;bp.type=type;bp.frequency.value=f;bp.Q.value=q;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+dec);s.connect(bp);bp.connect(g);g.connect(MUS.dry);if(rev&&MUS.rev)g.connect(MUS.rev);s.start(t,Math.random()*.3);s.stop(t+dec+.02);}
+function mClap(c,t,v){[0,.011,.023].forEach(function(d,i){mNoise(c,t+d,(i<2?.16:.22)*v,"bandpass",1400,1.1,i<2?.025:.16,true);});}
+function mHat(c,t,v){mNoise(c,t,.05*v,"highpass",7500,.7,.045,false);}
 function mNote(c,kind,m,t,d,v){if(kind==="bell")mBell(c,m,t,d,v*.9);else if(kind==="pluck")mPluck(c,m,t,d,v*1.1);else mPiano(c,m,t,d,v,6);}
 /* quelle note de l'accord jouer à la petite note k du temps « beat » (−1 = rien) */
 function arpIdx(S,k,beat,i,pass,len){var a=S.arp;
@@ -511,6 +520,7 @@ function arpIdx(S,k,beat,i,pass,len){var a=S.arp;
   if(a==="pulse")return [0,1,2,1][i%4]%len;
   if(a==="stars")return [0,1,2,3,2,1][i%6]%len;
   if(a==="waltz")return (k===0&&beat>0)?99:-1;
+  if(a==="pop")return k===1?98:-1;
   return k%len;}
 function mSched(){var c=AC;if(!c||!MUS.run)return;mFill(c,c.currentTime+.45);MUS.t=setTimeout(mSched,90);}
 function mFill(c,until){
@@ -520,10 +530,14 @@ function mFill(c,until){
     var e=S.e,V=S.vol,L=S.bars.length*per,s=MUS.step%L,pass=Math.floor(MUS.step/L)%2,bar=S.bars[Math.floor(s/per)],i=s%per,beat=Math.floor(i/S.sub),k=i%S.sub,t=MUS.next;
     var ch=bar.t[Math.min(beat,bar.t.length-1)],ai=arpIdx(S,k,beat,i,pass,ch.length),acc=(k===0)?1.15:1;
     if(ai===99)ch.forEach(function(n){mPiano(c,n,t,1.2,.05*V,4);});
+    else if(ai===98)ch.forEach(function(n){mPiano(c,n+12,t,.5,.035*V,3);});
     else if(ai>=0)mPiano(c,ch[ai],t,1.4,.07*acc*V*(bar.m&&bar.m.length?.85:1),4);
     if(i===0){mPiano(c,bar.b[0],t,4,.12*V,5);mPiano(c,bar.b[1],t,4,.085*V,5);}
+    if(S.bass2&&i===S.sub*2)mPiano(c,bar.b[1],t,1.5,.07*V,4);
+    if(S.dr){if(S.dr.k.indexOf(i)>=0)mKick(c,t,V);if(S.dr.s.indexOf(i)>=0)mClap(c,t,V);if(S.dr.h)mHat(c,t,V*(k?1:.55));}
     if(i===0&&bar.pad)mPad(c,[bar.b[1],bar.b[1]+7],t,per*e);
-    if(bar.m)bar.m.forEach(function(n){var at=n[0]*S.sub;if(at>=i&&at<i+1){mNote(c,S.mel,n[1]+(pass?S.oct2:0),t+(at-i)*e,Math.max(.8,n[2]*S.sub*e*1.3),(pass&&S.oct2?.12:.16)*V);}});
+    if(bar.m)bar.m.forEach(function(n){var at=n[0]*S.sub;if(at>=i&&at<i+1){mNote(c,S.mel,n[1]+(pass?S.oct2:0),t+(at-i)*e,Math.max(.8,n[2]*S.sub*e*1.3),(pass&&S.oct2?.12:.16)*V);
+      if(S.mel2)mPiano(c,n[1]-12,t+(at-i)*e,Math.max(.8,n[2]*S.sub*e*1.3),.07*V,5);}});
     MUS.step++;MUS.next+=e;}}
 function musicLevel(){if(!MUS.on||!soundOn)return 0;if(screen==="game")return (window.__vbusy&&window.__vbusy())?.2:.6;if(screen==="title"||screen==="rules")return .3;return 0;}
 setInterval(function(){var c=AC;if(!c)return;var w=musicLevel();
