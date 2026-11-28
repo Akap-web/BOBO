@@ -230,6 +230,12 @@ h1{margin:0 0 2px;font-family:Georgia,serif;font-size:46px;font-size:56px;font-s
 @media (max-width:560px){#hearts{top:auto;bottom:24px;left:14px;transform:none}.blk{font-size:13px}.blk.sm{font-size:10px}.bh{font-size:8px;letter-spacing:0}#game{padding-left:6px;padding-right:6px}#who{display:none}#bookBtn span{display:none}#bookBtn{padding:0 10px}}
 #pre{position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;opacity:0;pointer-events:none;transition:opacity 1.6s ease;background:#b9c9d6 center/cover no-repeat}
 #pre.on{opacity:1}
+#cue{position:fixed;left:0;right:0;top:42%;text-align:center;pointer-events:none;z-index:60;font-family:inherit;font-weight:900;line-height:1;font-size:54px;color:#e8202a;letter-spacing:.02em;
+  -webkit-text-stroke:3px #fff;text-shadow:0 0 18px rgba(255,60,60,.85),0 6px 0 #8a0d12,0 10px 24px rgba(0,0,0,.45);opacity:0;-webkit-transform:translateY(-50%) scale(.2) rotate(-8deg);transform:translateY(-50%) scale(.2) rotate(-8deg)}
+@media (min-width:700px){#cue{font-size:104px}}
+#cue.on{-webkit-animation:cuePop 1.5s cubic-bezier(.2,1.4,.4,1) forwards;animation:cuePop 1.5s cubic-bezier(.2,1.4,.4,1) forwards}
+@-webkit-keyframes cuePop{0%{opacity:0;-webkit-transform:translateY(-50%) scale(.2) rotate(-8deg)}22%{opacity:1;-webkit-transform:translateY(-50%) scale(1.12) rotate(2deg)}34%{-webkit-transform:translateY(-50%) scale(.96) rotate(0)}44%{-webkit-transform:translateY(-50%) scale(1.03)}75%{opacity:1;-webkit-transform:translateY(-50%) scale(1)}100%{opacity:0;-webkit-transform:translateY(-50%) scale(1.6)}}
+@keyframes cuePop{0%{opacity:0;transform:translateY(-50%) scale(.2) rotate(-8deg)}22%{opacity:1;transform:translateY(-50%) scale(1.12) rotate(2deg)}34%{transform:translateY(-50%) scale(.96) rotate(0)}44%{transform:translateY(-50%) scale(1.03)}75%{opacity:1;transform:translateY(-50%) scale(1)}100%{opacity:0;transform:translateY(-50%) scale(1.6)}}
 </style>
 </head>
 <body>
@@ -933,6 +939,10 @@ function comicAim(whoK,t){var B=$("bubble");B.__last=[whoK,t];
 function say(t,whoK,then,pause){try{var W_=window.__who||(window.__who={});(W_[t]=W_[t]||{})[(whoK||"narr")+(whoK==="cust"&&G&&G.lastC?":"+G.lastC:"")]=1;}catch(e){}var B=$("bubble");B.classList.remove("hide");B.className=whoK||"narr";$("tag").textContent=TAGS[whoK||"narr"];$("tag").style.display=TAGS[whoK||"narr"]?"":"none";
   $("say").innerHTML="";$("say").appendChild(words(t));comicAim(whoK,t);sp(t,150,voiceOf(whoK));karaoke(sayBox(),t);
   if(then)later(then,(hasVoice(t)&&voiceOn&&soundOn?350:estDur(t)+350)+(pause||0));}
+/* « Your turn! » : gros mot rouge au centre, sans fond, qui jaillit puis s'efface (la bulle du haut n'est pas utilisée) */
+function cue(t,then){try{(window.__who=window.__who||{})[t]={narr:1};}catch(e){}$("bubble").classList.add("hide");var c=$("cue");if(!c){c=el("div");c.id="cue";document.body.appendChild(c);}
+  c.textContent=t;c.className="";void c.offsetWidth;c.className="on";sp(t,100,voiceOf("narr"));
+  timers.push(setTimeout(function(){c.className="";},1500));if(then)later(then,Math.max(1100,hasVoice(t)&&voiceOn&&soundOn?350:estDur(t)+350));}
 /* plusieurs répliques à la suite : [[texte, qui], …] */
 function seq(list,then){var i=0;(function nx(){if(i>=list.length){if(then)then();return;}var it=list[i++];say(it[0],it[1],nx);})();}
 /* une réplique où Sophia garde la main : ↻ pour réécouter, Next pour continuer */
@@ -1043,7 +1053,7 @@ function lineShow(v,then){if(G.n>0||G.sc>1){orderGame(model(v),then);return;}   
 function sayIt(v,then,txt,voice,quick){var t=txt||model(v),L=$("line"),dur=0,vc=voice||voiceOf("me");$("ctl").innerHTML="";$("hint").textContent="";G.ans=null;
   var go=function(){KAR[t]=function(delay,d){dur=d;lightUp(L,t,delay,d);};sp(t,0,vc);
     if(!voiceOn||!soundOn||!hasVoice(t,vc)){delete KAR[t];dur=estDur(t);lightUp(L,t,0,dur);}
-    later(function(){say("Your turn!","narr",function(){var d=dur||estDur(t);Array.prototype.forEach.call(L.querySelectorAll(".k"),function(e){e.classList.add("dim");});
+    later(function(){cue("Your turn!",function(){var d=dur||estDur(t);Array.prototype.forEach.call(L.querySelectorAll(".k"),function(e){e.classList.add("dim");});
         lightUp(L,t,200,d*1.15);timers.push(setTimeout(function(){Array.prototype.forEach.call(L.querySelectorAll(".k"),function(e){e.classList.remove("dim");});
           btn("&#128264; Again","alt",function(){SFX.tap();sayIt(v,then,txt,voice,true);});   /* « Again » : la phrase puis « Your turn! », sans redire la consigne */
           btn("I said it! &#10003;","go pulse",function(){SFX.tap();$("ctl").innerHTML="";got(t);then();});},d*1.15+500));});},hasVoice(t,vc)?400:estDur(t)+400);};
@@ -1663,7 +1673,12 @@ function dattrs(m){return ["size","how","kind","wth"].filter(function(k){return 
 /* la taille ne se dessine que pour les plats que la carte propose en petit ET en grand (chocolat, jus, smoothie, pizza) ; tous les autres ont la même échelle */
 function ditem(m,ok){var s=SIZED[m.id]?m.size:"",pink=/strawberry smoothie/.test(m.d);return {img:dishImg(m),sc:s==="small"?.66:(s==="large"?1:.9),flt:pink?"hue-rotate(-58deg) saturate(1.15)":"",ok:ok,key:dishImg(m)+"|"+s+"|"+(pink?1:0)};}
 function dfakes(m,n){var out=[],seen={};seen[ditem(m).key]=1;function add(it){if(!seen[it.key]){seen[it.key]=1;out.push(it);}}
-  shuffle(MENU.filter(function(x){return x.id===m.id&&x.d!==m.d;})).forEach(function(x){add(ditem(x,0));});
+  var sib=MENU.filter(function(x){return x.id===m.id&&x.d!==m.d;});
+  /* « a small green salad » : la salade sans tomates est aussi une salade verte → jamais proposée comme fausse réponse */
+  if(m.id==="salad"&&!/with/.test(m.d))sib=sib.filter(function(x){return dishImg(x)!=="f_salad_plain";});
+  shuffle(sib).forEach(function(x){add(ditem(x,0));});
+  /* pour toute salade : la salade de fruits aussi (il faut entendre « green » ou « fruit ») */
+  if(m.id==="salad")MENU.filter(function(x){return x.id==="fruitsalad";}).forEach(function(x){add(ditem(x,0));});
   /* jamais le même plat dans une taille que la carte ne propose pas : seulement les vrais plats de la carte */
   var same=shuffle(MENU.filter(function(x){return x.id!==m.id&&x.drink===m.drink;})),oth=shuffle(MENU.filter(function(x){return x.id!==m.id&&x.drink!==m.drink;}));
   same.concat(oth).forEach(function(x){if(out.length<n-1)add(ditem(x,0));});return out.slice(0,n-1);}
@@ -1688,7 +1703,7 @@ function rest1(keep){var slot=G.n%3,m=keep||newDish(function(q){var n=dattrs(q).
       btn("&#8635; Listen again","alt",function(){SFX.tap();sp(m.t);});
       var ks=shuffle(dattrs(m)),i=0;(function nx(){if(i>=ks.length){$("ctl").innerHTML="";boardClear(function(){lineDish(m,function(){sayIt(null,find,m.t);});});return;}var k=ks[i++];boardDrop(k,m[k],nx);})();},500);});
   function find(){$("line").classList.remove("on");say("Can you help?","narr");G.tip="Listen to the order again, then look at every dish.";
-    shelfShow([ditem(m,1)].concat(dfakes(m,3)),function(it,d){serve(m,it,d,done,function(){say("Can you help?","narr");},m.t);});}}
+    shelfShow([ditem(m,1)].concat(dfakes(m,m.id==="salad"?4:3)),function(it,d){serve(m,it,d,done,function(){say("Can you help?","narr");},m.t);});}}
 
 /* scène 2 : la carte propose deux versions ; il faut poser la bonne question, écouter, puis apporter le bon plat parmi six */
 function szA(m){return pls(m.size);}
@@ -1789,6 +1804,7 @@ function linesCh(){var L=["Hello! Jump in!","Tell me about yourself.","Here we a
     Object.keys(FNAME).forEach(function(k){L.push(FNAME[k]);});MENU.forEach(function(m){L.push(m.t);});}
   return L;}
 window.__menu=function(){return MENU;};window.__gar=function(){return GAR;};
+
 
 })();
 </script>
