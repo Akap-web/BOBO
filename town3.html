@@ -267,7 +267,7 @@ document.getElementById("lk-go").onclick=tryit;
 I.addEventListener("keydown",function(e){if(e.key==="Enter")tryit();});
 })();</script>
 
-<div id="ldr" style="position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#1d2f4a 0%,#3a4f6e 55%,#c98b5a 100%);font-family:Georgia,'Times New Roman',serif;color:#fff8ec;transition:opacity .6s">
+<div id="ldr" style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#1d2f4a 0%,#3a4f6e 55%,#c98b5a 100%);font-family:Georgia,'Times New Roman',serif;color:#fff8ec;transition:opacity .6s">
 <div style="text-align:center;width:78vw;max-width:520px">
 <div style="font-size:44px;letter-spacing:.5px;text-shadow:0 2px 8px rgba(0,0,0,.35)">The Floating Town</div>
 <div id="ldrT" style="font-size:20px;opacity:.9;margin:14px 0 22px">Loading the game&hellip;</div>
@@ -436,9 +436,10 @@ function vNext(){
   var keys=SND[vkey(t)]?[vkey(t)]:voiceChain(t);
   /* la voix du personnage, quand elle existe pour cette phrase (vo_, vb_, vm_, vw_ à la place de v_) ; sinon la voix du jeu */
   var own=it.v?it.v+vkey(t).slice(1):"";if(own&&SND[own])keys=[own];
-  if(!keys&&it.v){var alt=["vm","vw","vs","vo","vn","vb"].map(function(p){return p+vkey(t).slice(1);}).filter(function(k){return SND[k];});if(alt.length)keys=[alt[0]];}   /* phrase pas encore enregistrée par ce personnage : celle d'un autre plutôt que le silence */   /* une phrase qui n'existe que dans la voix d'un personnage (les réponses de Sophia en barque) */
-  else if(keys&&it.v)keys=keys.map(function(k){var q=it.v+k.slice(1);return SND[q]?q:k;});
+  if(!keys&&it.v){var ak=anyKey(vkey(t),it.v);if(ak)keys=[ak];}   /* phrase pas encore enregistrée par ce personnage : celle d'un autre plutôt que le silence */   /* une phrase qui n'existe que dans la voix d'un personnage (les réponses de Sophia en barque) */
+  if(keys){keys=keys.map(function(k){return (SND[k]&&(k.indexOf("v_")!==0||!it.v))?k:anyKey(k,it.v);});if(keys.indexOf(null)>=0)keys=null;}
   if(keys&&window.__vlog)window.__vlog.push(keys.join("+"));
+  if(keys&&window.__vfall&&it.v)keys.forEach(function(k){if(k.indexOf(it.v+"_")!==0)window.__vfall.push(it.v+" | "+t+" | "+k);});
   if(keys){playChain(keys,done,t);return;}
   /* uniquement les voix enregistrées : une phrase sans enregistrement n'est pas dite */
   if(window.__voiceMiss)window.__voiceMiss.push(t);if(window.VHOOK)try{window.VHOOK(t,0,-1);}catch(e){}done();
@@ -446,7 +447,10 @@ function vNext(){
 /* une phrase non enregistrée peut être dite en morceaux enregistrés : « I went to the jungle. » + « with the crab. »,
    ou phrase par phrase (« Not me! » + « I was at the beach! » + « Read your notebook! ») */
 var VPIECE=null;
-function pieces(){if(VPIECE)return VPIECE;VPIECE={};Object.keys(SND).forEach(function(k){if(k.indexOf("v_")===0&&k.length<72)VPIECE[k.slice(2)]=k;});return VPIECE;}
+/* morceaux : toute phrase enregistrée, quelle que soit la voix (on choisit la voix morceau par morceau au moment de dire) */
+function pieces(){if(VPIECE)return VPIECE;VPIECE={};Object.keys(SND).forEach(function(k){var m=/^(v[a-z]*\d*)_(.+)$/.exec(k);if(m&&k.length<76)VPIECE[m[2]]="v_"+m[2];});return VPIECE;}
+var VPREF=["vs","vo","vv","vr","vn","vb","vm","vw","vc4","vc5","vc6","vc7","vc8","vc9","vc10","vc11","vc12","vc13","vc14"];
+function anyKey(k,v){var r=k.slice(2),q;if(v&&SND[q=v+"_"+r])return q;for(var i=0;i<VPREF.length;i++)if(SND[q=VPREF[i]+"_"+r])return q;return SND[k]?k:null;}   /* la voix du personnage, sinon une autre voix enregistrée, la voix Google en dernier */
 function voiceChain(t){
   /* la phrase est découpée en morceaux enregistrés, le moins de morceaux possible (5 au plus) :
      « Where were you at » + « twenty past three », « I went to the jungle » + « with the crab »… */
@@ -955,7 +959,7 @@ var ICON={size:'<path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 
 ICON.how='<path d="M8 3c-2 3 2 4 0 7M12 3c-2 3 2 4 0 7M16 3c-2 3 2 4 0 7"/><path d="M4 14h16a8 8 0 0 1-16 0z"/>';ICON.kind='<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>';
 var COLS=CH===2?[{k:"size",t:"Size"},{k:"col",t:"Colour"},{k:"mat",t:"Material"},{k:"noun",t:"Thing",fix:1}]:
   CH===3?[{k:"size",t:"Size"},{k:"how",t:"Hot, cold…"},{k:"kind",t:"Kind"},{k:"noun",t:"Dish",fix:1},{k:"wth",t:"With"}]:
-  [{k:"size",t:"Size"},{k:"age",t:"Age"},{k:"col",t:"Colour"},{k:"from",t:"From"},{k:"mat",t:"Material"},{k:"noun",t:"Thing",fix:1},{k:"wth",t:"With"}];
+  [{k:"size",t:"Size"},{k:"age",t:"Age"},{k:"col",t:"Colour"},{k:"from",t:"Origin"},{k:"mat",t:"Material"},{k:"noun",t:"Thing",fix:1},{k:"wth",t:"With"}];
 var NOUNI=0;COLS.forEach(function(c,i){if(c.fix)NOUNI=i;});
 var B=null;
 function rowsN(){var h=window.innerHeight;return h<420?4:(h<600?6:7);}
@@ -997,7 +1001,7 @@ function landed(){var c=B.cur,ci=c.ci;B.cur=null;if(c.el.parentNode)c.el.parentN
   var good=0;COLS.forEach(function(x,i){if(x.k===c.k)good=i;});restart($("bhead").children[good],"flash");
   if(B.stack[ci].filter(function(x){return x.stone;}).length>=fullN()){timers.push(setTimeout(boardFull,700));return;}
   timers.push(setTimeout(function(){boardDrop(c.k,c.w,c.then);},1100));}
-function boardFull(){boardKill();G.stones=null;uiClear();say("Try again!","narr",function(){G.redo();},600);}
+function boardFull(){boardKill();G.stones=null;uiClear();var kc=G.lastC;say("Try again!","narr",function(){G.keepC=kc;G.redo();G.keepC=null;},600);}
 /* la ligne est complète : les mots quittent la fiche (les pierres restent) */
 /* le tableau est juste : les mots s'allument un par un, de gauche à droite, avec les flèches entre eux — l'ordre de la phrase se voit — puis ils s'envolent */
 function boardClear(then){if(!B||B.shown){return boardClear0(then);}B.shown=1;var ws=[];B.stack.forEach(function(s,i){s.forEach(function(it){if(!it.stone&&it.el)ws.push({i:i,el:it.el});});});ws.sort(function(a,b){return a.i-b.i;});
@@ -1087,11 +1091,17 @@ function boardFit(){var Bd=$("board"),W=$("who");Bd.style.marginLeft="";Bd.style
   var P=W.offsetParent,pr=P?P.getBoundingClientRect():{left:0},right=pr.left+W.offsetLeft+W.offsetWidth*.9,r=Bd.getBoundingClientRect(),VW=window.innerWidth;
   if(r.left>=right)return;var w=Math.min(880,VW-right-14);if(w<VW*.45)return;Bd.style.maxWidth=w+"px";Bd.style.marginLeft=(right-(VW-w)/2)*2+"px";}
 /* le bon objet quitte l'étagère et va dans les mains du personnage */
+/* taille réelle de chaque objet, en fraction de la hauteur du personnage : l'objet rendu garde ses vraies proportions */
+var REAL={"suitcase":.38,"umbrella":.5,"backpack":.28,"wallet":.07,"water bottle":.14,"phone case":.09,"headphones":.12,"camera":.08,"gloves":.12,"sunglasses":.08,"watch":.05,"hat":.2,"pencil case":.12,"lunch box":.12,"passport holder":.08,"notebook":.12,"travel pillow":.18,"skateboard":.45,"cushion":.25,"teddy bear":.2,"rubber duck":.07,
+ "T-shirt":.3,"hoodie":.35,"jumper":.35,"jacket":.4,"jeans":.45,"shorts":.25,"dress":.5,"scarf":.4,"trainers":.17,"boots":.25,"socks":.15,"cap":.12,"shirt":.35,"skirt":.3,"coat":.55,"swimsuit":.25,"belt":.4,"tracksuit":.45,
+ "salad":.14,"greentea":.07,"fish":.16,"water":.14,"smoothie":.11,"pancakes":.16,"soup":.14,"lemontea":.08,"burger":.1,"juice":.1,"fruitsalad":.12,"sandwich":.12,"pizza":.2,"icecream":.09,"milk":.09,"dumplings":.15,"omelette":.15,"friedrice":.15,"bread":.14,"pasta":.16,"chocolate":.08,"cake":.1,"springrolls":.15};
 function flyToWho(d){var W=$("who"),im=d.querySelector("img");if(!im||!W.classList.contains("on"))return;var a=im.getBoundingClientRect(),P=W.offsetParent,pr=P?P.getBoundingClientRect():{left:0,top:0},
     L0=pr.left+W.offsetLeft,T0=pr.top+W.offsetTop,ww=W.offsetWidth,hh=W.offsetHeight,tx=L0+ww*.55,ty=Math.min(window.innerHeight*.78,T0+hh*.52),c=im.cloneNode();
   c.className="flyit";c.style.left=a.left+"px";c.style.top=a.top+"px";c.style.width=a.width+"px";c.style.height=a.height+"px";document.body.appendChild(c);im.style.visibility="hidden";
   var dx=tx-(a.left+a.width/2),dy=ty-(a.top+a.height/2);void c.offsetWidth;
-  tf(c,"translate("+dx.toFixed(0)+"px,"+dy.toFixed(0)+"px) scale(.8)");setTimeout(function(){c.style.opacity="0";},1500);setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},2200);}
+  var nm=G&&G.cur?(G.cur.o?G.cur.o.n:(G.cur.m?G.cur.m.id:"")):"",fr=REAL[nm]||.15,nw=im.naturalWidth||a.width,nh=im.naturalHeight||a.height,
+    cw=Math.min(a.width,a.height*nw/nh),chh=cw*nh/nw,k=fr*hh/Math.max(cw,chh);
+  tf(c,"translate("+dx.toFixed(0)+"px,"+dy.toFixed(0)+"px) scale("+k.toFixed(3)+")");setTimeout(function(){c.style.opacity="0";},1500);setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},2200);}
 function shelfLock(on){if(on)$("shelf").setAttribute("data-lock","1");else $("shelf").removeAttribute("data-lock");}
 var HINTS={colour:"Look at the colour.",size:"Look at the size.",label:"Look at the label.",material:"Look at the material."};
 /* Sophia montre un objet : « Is this yours? » */
@@ -1326,13 +1336,13 @@ function scene1(keep){var x=keep||newObj(),o=x.o,v=x.v;G.cur={kind:"s1",o:o,v:v}
     (function ask(){if(i>=ks.length){boardClear(function(){hideTalk();lineShow(v,function(){sayIt(v,function(){find();});});});return;}
       var k=ks[i++];say(qOf(k,o.pl),"officer",function(){say(aOf(k,v,o.pl),"cust",function(){boardDrop(k,wordOf(k,v),ask);});});})();},400);
   function find(){$("line").classList.remove("on");say("Can you help?","narr");
-    shelf(o,v,3,false,function(it,d){tryItem(o,it,d,done,function(){if(--G.lives<=0){hearts(true);uiClear();say("Try again!","narr",function(){lives(2);scene1(x);},500);return;}hearts(true);
+    shelf(o,v,3,false,function(it,d){tryItem(o,it,d,done,function(){if(--G.lives<=0){hearts(true);uiClear();var kc=G.lastC;say("Try again!","narr",function(){lives(2);G.keepC=kc;scene1(x);G.keepC=null;},500);return;}hearts(true);
       /* après une erreur : réécouter la description avant de choisir de nouveau */
       $("line").classList.add("on");say("Listen again.","narr",function(){var t=model(v);sp(t,0,voiceOf("me"));KAR[t]=function(dl,du){lightUp($("line"),t,dl,du);};later(function(){$("line").classList.remove("on");say("Can you help?","narr");},hasVoice(t)?400:estDur(t)+400);});});});}}
 
 /* scène 2 : six objets ; il manque des informations, il faut poser les questions */
 function scene2(keep){var x=keep||newObj(),o=x.o,v=x.v;G.cur={kind:"s2",o:o,v:v};G.redo=function(){scene2(x);};bgScene("p_lost_2");who(custFor(o.n));var asked=0;
-  var lose=function(){if(--G.lives<=0){hearts(true);uiClear();say("Try again!","narr",function(){lives(2);scene2();},500);return true;}hearts(true);return false;};
+  var lose=function(){if(--G.lives<=0){hearts(true);uiClear();var kc=G.lastC;say("Try again!","narr",function(){lives(2);G.keepC=kc;G.redo();G.keepC=null;},500);return true;}hearts(true);return false;};
   var go=function(){say(opener(o),"cust",function(){say("Ask the questions!","narr");
       shelf(o,v,6,true,function(it,d){if(!asked){SFX.huh();$("hint").innerHTML="Ask a question first: say it, then touch it.";return;}
         tryItem(o,it,d,done,function(){if(!lose())say("Ask the questions!","narr");});});
@@ -1401,7 +1411,7 @@ var PB1=[
     ["h","The answers"],["l","It's black."],["l","It's made of leather."],["l","It's small."],["l","It's old."],["l","It's German."],["l","It's got a red ribbon."],
     ["h","Is it the right one?"],["l","Is this yours?"],["l","Yes, it's mine!"],["l","No, it isn't mine."],["l","Here it is!"],["l","Thank you so much!"]];
     return a.concat(mine());}},
- {t:"Describe it!",h:function(){return [["n","Put the words in this order:"],["f",[["Size","small"],["Age","new"],["Colour","black"],["From","German"],["Material","leather"],["Thing","bag"]]],
+ {t:"Describe it!",h:function(){return [["n","Put the words in this order:"],["f",[["Size","small"],["Age","new"],["Colour","black"],["Origin","German"],["Material","leather"],["Thing","bag"]]],
     ["l","It's a small new black German leather bag."],["n","You never need all the words. Two or three are enough:"],["l","It's a small black leather wallet."],["l","It's a big blue cotton backpack."],["l","It's a small silver Swiss watch."],["l","It's a long black umbrella."]];}},
  {t:"a or an?",h:function(){return [["n","Before a, e, i, o, u, say an."],["l","A big suitcase."],["l","An old suitcase."],["l","An orange cap."],["l","It's an old black camera."],["l","It's an orange plastic phone case."]];}},
  {t:"It or they?",h:function(){return [["n","One thing: it. Two things together (a pair of…): they."],["l","What colour is it?"],["l","It's black."],["l","What colour are they?"],["l","They're black."],
@@ -1563,7 +1573,7 @@ function shop2(keep){var x=keep||newGar(),o=x.o,v=x.v;G.cur={kind:"s2",o:o,v:v};
       btns.push({t:pick(need.map(function(k){return gqBad(k,v);})),bad:1});if(G.n%2===1)btns.push({t:o.pl?"Are they for your dog?":"Is it for your dog?",silly:1});
       shuffle(btns).forEach(function(q){var b=el("button","qb"+(q.bad||q.silly?" qx":""),q.t);b.onclick=function(e){e.stopPropagation();ac();if($("shelf").getAttribute("data-lock")||b.classList.contains("done")||b.classList.contains("no"))return;shelfLock(true);$("hint").textContent="";
           if(q.bad||q.silly){/* une question fausse n'est jamais dite par la voix modèle ; la question farfelue seulement si elle est enregistrée */(q.silly&&SND[voiceOf("me")+vkey(q.t).slice(1)]?function(f){say(q.t,"me",f);}:function(f){f();})(function(){say(q.silly?(o.pl?"For my dog?! No, they're for me!":"For my dog?! No, it's for me!"):"Sorry? I don't understand.","cust",function(){SFX.huh();b.classList.add("no");
-              $("hint").innerHTML=q.silly?"That question doesn't help!":"Listen again: that question isn't correct.";shelfLock(false);if(--G.lives<=0){hearts(true);uiClear();say("Try again!","narr",function(){lives(2);shop2();},500);}else hearts(true);});});return;}
+              $("hint").innerHTML=q.silly?"That question doesn't help!":"Listen again: that question isn't correct.";shelfLock(false);if(--G.lives<=0){hearts(true);uiClear();var kc=G.lastC;say("Try again!","narr",function(){lives(2);G.keepC=kc;G.redo();G.keepC=null;},500);}else hearts(true);});});return;}
           var k=q.k,fin=function(){asked++;b.classList.add("done");shelfLock(false);};
           say(q.t,"me",function(){if(k===hes){var w=null;GCOLS.filter(function(x){return x!==v.col;}).some(function(x){if(hasVoice(pls(x),voiceOf("cust"))){w=pls(x);return true;}return false;});
               if(w&&hasVoice("No, wait! Sorry.",voiceOf("cust"))){hes=null;seq([[w,"cust"],["No, wait! Sorry.","cust"],[pls(v[k]),"cust"]],fin);return;}}
