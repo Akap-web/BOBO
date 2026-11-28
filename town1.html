@@ -910,7 +910,7 @@ function talkHead(whoK){
   return null;}
 function comicPlace(whoK,t){var C=$("comic");if(!C){C=el("div","");C.id="comic";C.innerHTML='<span class="tag" id="ctag"></span><div id="csay"></div>';document.body.appendChild(C);}
   var h=talkHead(whoK);C.classList.remove("on");if(!h)return false;
-  C.className=whoK;$("ctag").textContent=TAGS[whoK]||"";$("csay").innerHTML="";$("csay").appendChild(words(t));C.__who=whoK;
+  C.className=whoK;$("ctag").textContent=TAGS[whoK]||"";$("csay").innerHTML="";$("csay").appendChild(words(t));C.__who=whoK;C.__t=t;
   return comicPos(h);}
 function comicBusy(){return ["board","shelf","lost","line","ctl","hint"].map(function(k){var e=$(k);if(!e||!e.offsetWidth)return null;var r=e.getBoundingClientRect();return r.height>4?r:null;}).filter(Boolean);}
 /* la bulle : d'abord À CÔTÉ du personnage, la pointe vers sa bouche (côté milieu de l'écran) ; sinon au-dessus de la tête ; jamais sur le visage ni sur les boutons */
@@ -1474,7 +1474,7 @@ var homeArm=0;$("homeBtn").addEventListener("click",function(e){if(screen!=="gam
 function fit(){var W=document.body.clientWidth||window.innerWidth,H=window.innerHeight;
   var kh=Math.max(26,Math.min(50,Math.round(H*.075)));if(W<560)kh=Math.min(kh,34);document.documentElement.style.setProperty("--kh",kh+"px");
   var b=Math.max(24,Math.min(46,Math.round(H*.058)));document.documentElement.style.setProperty("--bh",b+"px");document.documentElement.style.setProperty("--rows",rowsN());
-  if(B)B.stack.forEach(function(s){s.forEach(function(it,k){if(it.el)it.el.style.bottom=(k*b+2)+"px";});});if(RIDE.on)rideSize();whoPlace();if($("comic")&&$("comic").classList.contains("on"))comicPlace($("comic").__who,$("csay").textContent.replace(/\s+/g," ").trim());animSize($("bgA"));animSize($("bgB"));animSize($("pre"));boardFit();}
+  if(B)B.stack.forEach(function(s){s.forEach(function(it,k){if(it.el)it.el.style.bottom=(k*b+2)+"px";});});if(RIDE.on)rideSize();whoPlace();if($("comic")&&$("comic").classList.contains("on"))comicPlace($("comic").__who,$("comic").__t||$("csay").textContent);animSize($("bgA"));animSize($("bgB"));animSize($("pre"));boardFit();}
 window.addEventListener("resize",fit);fit();
 /* pour les tests */
 window.__lb=function(){return {screen:screen,sc:G&&G.sc,n:G&&G.n,kind:G&&G.cur&&G.cur.kind,d:G&&G.cur&&G.cur.v?G.cur.v.d:null,art:G&&G.cur&&G.cur.v?artOf(G.cur.v.d):null,
